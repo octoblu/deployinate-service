@@ -84,7 +84,6 @@ class DeployinateModel
 
   _startService: (service, callback=->) =>
     debug '_startService', service
-    debug "fleetctl start #{service}"
     exec "fleetctl start #{service}", (error, stdout, stderr) =>
       debug 'startService error:', error.message if error?
       debug 'startService stdout:', stdout if stdout?
