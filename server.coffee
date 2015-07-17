@@ -4,6 +4,7 @@ express = require 'express'
 bodyParser = require 'body-parser'
 meshbluAuth = require 'express-meshblu-auth'
 errorHandler = require 'errorhandler'
+MeshbluConfig = require 'meshblu-config'
 MeshbluAuthExpress = require 'express-meshblu-auth/src/meshblu-auth-express'
 meshbluHealthcheck = require 'express-meshblu-healthcheck'
 DeployinateController = require './src/deployinate-controller'
@@ -23,10 +24,9 @@ app.use meshbluAuth meshbluConfig
 
 app.options '*', cors()
 
-deployinateController = new DeployinateController meshbluConfig
+deployinateController = new DeployinateController
 
 app.post '/deploy', deployinateController.deploy
-app.post '/rollback', deployinateController.rollback
 
 server = app.listen PORT, ->
   host = server.address().address

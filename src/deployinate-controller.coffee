@@ -1,24 +1,17 @@
 _            = require 'lodash'
-debug        = require('debug')('flow-deploy-service:flow-deploy-controller')
+debug        = require('debug')('deployinate-service:deployinate-controller')
 
 class DeployinateController
-  constructor: (@meshbluOptions={}, dependencies={}) ->
-    @DeployinateModel = dependencies.DeployinateModel || require './flow-deploy-model'
-
-  rollback: (request, response) =>
-    {flowId} = request.params
-    @deployinateModel = new @DeployinateModel flowId
-    @deployinateModel.rollback (error) ->
-      return response.status(401).json(error: 'unauthorized') if error?.message == 'unauthorized'
-      return response.status(502).send(error: error) if error?
-      return response.status(204).end()
+  constructor: (dependencies={}) ->
+    @DeployinateModel = dependencies.DeployinateModel || require './deployinate-model'
 
   deploy: (request, response) =>
-    {flowId} = request.params
-    @deployinateModel = new @DeployinateModel flowId
+    {repository, updated_tags, docker_url} = request.body
+    tag = _.first _.keys(updated_tags)
+    @deployinateModel = new @DeployinateModel repository, docker_url, tag
     @deployinateModel.deploy (error) ->
       return response.status(401).json(error: 'unauthorized') if error?.message == 'unauthorized'
       return response.status(502).send(error: error) if error?
-      return response.status(204).end()
+      return response.status(201).end()
 
 module.exports = DeployinateController

@@ -1,0 +1,30 @@
+[Unit]
+Description=deployinate-service blue
+After=docker.service
+Requires=docker.service
+
+[Service]
+TimeoutStartSec=300
+Restart=always
+ExecStartPre=/bin/sh -c '/usr/bin/docker login quay.io \
+  --username $(/usr/bin/etcdctl get /docker/quay.io/username) \
+  --password $(/usr/bin/etcdctl get /docker/quay.io/password) \
+  --email $(/usr/bin/etcdctl get /docker/quay.io/email)'
+ExecStartPre=/usr/bin/etcdctl get /meshblu/host || /usr/bin/echo "etcd did not contain /meshblu/host" && exit 1
+ExecStartPre=/usr/bin/etcdctl get /meshblu/port || /usr/bin/echo "etcd did not contain /meshblu/port" && exit 1
+ExecStartPre=/usr/bin/etcdctl get /octoblu/deployinate-service/blue/port || /usr/bin/echo "etcd did not contain /octoblu/deployinate-service/blue/port" && exit 1
+ExecStartPre=/usr/bin/etcdctl get /octoblu/deployinate-service/blue/docker_url || /usr/bin/echo "etcd did not contain /octoblu/deployinate-service/blue/docker_url" && exit 1
+ExecStart=/bin/sh -c '/usr/bin/docker run \
+  --name deployinate-service-blue-%i \
+  -e DEBUG=deployinate-service* \
+  -p $(/usr/bin/etcdctl get /octoblu/deployinate-service/blue/port):80
+  -e MESHBLU_HOST=$(/usr/bin/etcdctl get /meshblu/host) \
+  -e MESHBLU_PORT=$(/usr/bin/etcdctl get /meshblu/port) \
+  $(/usr/bin/etcdctl get /octoblu/deployinate-service/blue/docker_url)'
+
+[Install]
+WantedBy=multi-user.target
+
+[X-Fleet]
+Conflicts=deployinate-service@*.service
+MachineMetadata=Services=true
