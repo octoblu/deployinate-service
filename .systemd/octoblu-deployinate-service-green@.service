@@ -16,9 +16,8 @@ ExecStartPre=/usr/bin/etcdctl get /meshblu/port || /usr/bin/echo "etcd did not c
 ExecStartPre=/usr/bin/etcdctl get /octoblu/deployinate-service/green/port || /usr/bin/echo "etcd did not contain /octoblu/deployinate-service/green/port" && exit 1
 ExecStartPre=/usr/bin/etcdctl get /octoblu/deployinate-service/green/docker_url || /usr/bin/echo "etcd did not contain /octoblu/deployinate-service/green/docker_url" && exit 1
 ExecStartPre=-/usr/bin/docker rm octoblu-deployinate-service-green-%i
-ExecStart=/bin/sh -c '/usr/bin/docker run \
+ExecStart=/bin/sh -c '/usr/bin/docker run --rm \
   --name octoblu-deployinate-service-green-%i \
-  --rm \
   -e DEBUG=deployinate-service* \
   -p $(/usr/bin/etcdctl get /octoblu/deployinate-service/green/port):80 \
   -e MESHBLU_HOST=$(/usr/bin/etcdctl get /meshblu/host) \

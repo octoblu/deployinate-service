@@ -1,5 +1,6 @@
 _       = require 'lodash'
-{exec} = require 'child_process'
+async   = require 'async'
+{exec}  = require 'child_process'
 request = require 'request'
 debug   = require('debug')('deployinate-service:deployinate-model')
 
@@ -10,12 +11,34 @@ class DeployinateModel
 
   deploy: (callback=->) =>
     @_getActiveAndNewColor (error, activeColor, newColor) =>
+      return callback error if error?
       @_setKey "#{@repository}/#{newColor}/docker_url", "#{@docker_url}:#{@tag}", =>
-        @_getKey "#{@repository}/#{newColor}/count", (error, count) =>
-          _.times count, (x) =>
-            @_destroyService "#{@repositoryDasherized}-#{newColor}@#{x}", (error) =>
-              @_startService "#{@repositoryDasherized}-#{newColor}@#{x}", (error) =>
-                callback error
+        return callback error if error?
+        @_deployAll newColor, callback
+
+  _deployAll: (newColor, callback=->) =>
+    @_getKey "#{@repository}/#{newColor}/count", (error, count) =>
+      return callback error if error?
+      async.times count, (x, next) =>
+        serviceName = "#{@repositoryDasherized}-#{newColor}@#{x+1}"
+        registerServiceName = "#{@repositoryDasherized}-#{newColor}-register@#{x+1}"
+
+        # order is important, the service must run before the register service
+        # or fleetctl start hangs
+        async.series [
+          (callback) => @_stopAndDestroyService registerServiceName, callback
+          (callback) => @_stopAndDestroyService serviceName, callback
+          (callback) => @_startService serviceName, callback
+          (callback) => @_startService registerServiceName, callback
+        ] , callback
+
+  _stopAndDestroyService: (serviceName, callback=->) =>
+    debug '_stopAndDestroyService', serviceName
+    @_stopService serviceName, (error) =>
+      return callback error if error?
+      @_destroyService serviceName, (error) =>
+        return callback error if error?
+        callback()
 
   _getKey: (key, callback=->) =>
     debug 'getKey', key
@@ -40,19 +63,29 @@ class DeployinateModel
       callback null, activeColor, newColor
 
   _destroyService: (service, callback=->) =>
+    debug '_destroyService', service
     exec "fleetctl destroy #{service}", (error, stdout, stderr) =>
       debug 'destroyService error:', error.message if error?
       debug 'destroyService stdout:', stdout if stdout?
       debug 'destroyService stderr:', stderr if stderr?
       callback error
 
+  _stopService: (service, callback=->) =>
+    debug '_stopService', service
+    exec "fleetctl stop #{service}", (error, stdout, stderr) =>
+      debug 'stopService error:', error.message if error?
+      debug 'stopService stdout:', stdout if stdout?
+      debug 'stopService stderr:', stderr if stderr?
+      return callback() if error?.killed == false
+      callback error
+
   _startService: (service, callback=->) =>
+    debug '_startService', service
+    debug "fleetctl start #{service}"
     exec "fleetctl start #{service}", (error, stdout, stderr) =>
       debug 'startService error:', error.message if error?
       debug 'startService stdout:', stdout if stdout?
       debug 'startService stderr:', stderr if stderr?
       callback error
-
-
 
 module.exports = DeployinateModel

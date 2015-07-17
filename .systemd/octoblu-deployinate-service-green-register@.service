@@ -19,7 +19,10 @@ ExecStart=/bin/sh -c "/usr/bin/echo 'Adding backend, server, and frontend to vul
     --id deployinate-service \
     --backend octoblu-deployinate-service-green \
     --route 'Host(\"deployinate.octoblu.com\")' \
-    --vulcan http://$(ifconfig docker0 | grep 'inet ' | awk '{print $2}'):8182"
+    --vulcan http://$(ifconfig docker0 | grep 'inet ' | awk '{print $2}'):8182 && \
+  /usr/bin/etcdctl set /octoblu/deployinate-service/active green \
+"
+
 ExecStop=/bin/sh -c "/usr/bin/echo 'Removing server from vulcand' && \
   /usr/bin/docker run --rm octoblu/vctl server rm --id octoblu-deployinate-service-green-%i --vulcan http://$(ifconfig docker0 | grep 'inet ' | awk '{print $2}'):8182"
 
