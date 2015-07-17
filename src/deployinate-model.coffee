@@ -22,6 +22,7 @@ class DeployinateModel
       async.times count, (x, next) =>
         serviceName = "#{@repositoryDasherized}-#{newColor}@#{x+1}"
         registerServiceName = "#{@repositoryDasherized}-#{newColor}-register@#{x+1}"
+        healthcheckServiceName = "#{@repositoryDasherized}-#{newColor}-healthcheck"
 
         # order is important, the service must run before the register service
         # or fleetctl start hangs
@@ -30,7 +31,9 @@ class DeployinateModel
           (callback) => @_stopAndDestroyService serviceName, callback
           (callback) => @_startService serviceName, callback
           (callback) => @_startService registerServiceName, callback
-        ] , callback
+        ] , (error) =>
+          return callback error if error?
+          @_startService healthcheckServiceName, callback
 
   _stopAndDestroyService: (serviceName, callback=->) =>
     debug '_stopAndDestroyService', serviceName
