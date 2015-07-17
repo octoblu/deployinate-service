@@ -17,7 +17,7 @@ class DeployinateModel
         @_deployAll newColor, callback
 
   _deployAll: (newColor, callback=->) =>
-    @_getKey "#{@repository}/#{newColor}/count", (error, count) =>
+    @_getKey "#{@repository}/count", (error, count) =>
       return callback error if error?
       async.times count, (x, next) =>
         serviceName = "#{@repositoryDasherized}-#{newColor}@#{x+1}"
