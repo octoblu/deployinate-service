@@ -10,6 +10,9 @@ class DeployinateModel
     @repositoryDasherized = @repository?.replace '/', '-'
 
   deploy: (callback=->) =>
+    return callback new Error("invalid repository: #{@repository}") unless @repository?
+    return callback new Error("invalid docker_url: #{@docker_url}") unless @docker_url?
+    return callback new Error("invalid tag: #{@tag}") unless @tag?
     @_getActiveAndNewColor (error, activeColor, newColor) =>
       return callback error if error?
       @_setKey "#{@repository}/#{newColor}/docker_url", "#{@docker_url}:#{@tag}", =>
