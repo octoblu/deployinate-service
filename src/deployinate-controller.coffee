@@ -11,7 +11,7 @@ class DeployinateController
     @deployinateModel = new @DeployinateModel repository, docker_url, tag
     @deployinateModel.deploy (error) ->
       return response.status(401).json(error: 'unauthorized') if error?.message == 'unauthorized'
-      return response.status(502).send(error: error) if error?
+      return response.status(502).send(error: error.message) if error?
       return response.status(201).end()
 
 module.exports = DeployinateController
