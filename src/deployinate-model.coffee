@@ -23,7 +23,7 @@ class DeployinateModel
     @_getKey "#{@repository}/count", (error, count) =>
       return callback error if error?
       debug '_deployAll', count
-      async.timesSeries count, @_restartXServices, (error, res) =>
+      async.timesSeries parseInt(count), @_restartXServices, (error, res) =>
         return callback error if error?
         debug 'async.timesSeries', res
         healthcheckServiceName = "#{@repositoryDasherized}-#{@newColor}-healthcheck"
