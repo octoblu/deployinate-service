@@ -61,6 +61,7 @@ class DeployinateModel
   _getActiveAndNewColor: (callback=->) =>
     @_getKey "#{@repository}/active", (error, activeColor) =>
       return callback error if error?
+      debug '_getActiveAndNewColor', activeColor
       if activeColor == 'green'
         newColor = 'blue'
       else
