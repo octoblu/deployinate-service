@@ -22,7 +22,7 @@ class DeployinateModel
   _deployAll: (newColor, callback=->) =>
     @_getKey "#{@repository}/count", (error, count) =>
       return callback error if error?
-      async.times count, (x, next) =>
+      async.timesSeries count, (x, next) =>
         serviceName = "#{@repositoryDasherized}-#{newColor}@#{x+1}"
         registerServiceName = "#{@repositoryDasherized}-#{newColor}-register@#{x+1}"
 
