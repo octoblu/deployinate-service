@@ -14,7 +14,7 @@ ExecStart=/bin/sh -c "/usr/bin/echo 'Checking backends before switching vulcand'
     --id octoblu-deployinate-service \
     --backend octoblu-deployinate-service-green \
     --route \"Host(\\\"$(etcdctl get /octoblu/deployinate-service/host)\\\")\" \
-    --vulcan http://$(ifconfig docker0 | grep 'inet ' | awk '{print $2}'):8182 && \
+    --vulcan http://$(/usr/bin/etcdctl get /vulcand/host):8182 && \
   /usr/bin/etcdctl set /octoblu/deployinate-service/active green \
 "
 
