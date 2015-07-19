@@ -22,25 +22,27 @@ class DeployinateModel
   _deployAll: (newColor, callback=->) =>
     @_getKey "#{@repository}/count", (error, count) =>
       return callback error if error?
-      async.timesSeries count, (x, next) =>
-        serviceName = "#{@repositoryDasherized}-#{newColor}@#{x+1}"
-        registerServiceName = "#{@repositoryDasherized}-#{newColor}-register@#{x+1}"
-
-        # order is important, the service must run before the register service
-        # or fleetctl start hangs
-        async.series [
-          (callback) => @_stopAndDestroyService registerServiceName, callback
-          (callback) => @_stopAndDestroyService serviceName, callback
-          (callback) => @_startService serviceName, callback
-          (callback) => @_startService registerServiceName, callback
-        ], next
-
-      , (error) =>
+      debug '_deployAll', count
+      async.timesSeries count, @_restartXServices, (error) =>
         return callback error if error?
         healthcheckServiceName = "#{@repositoryDasherized}-#{newColor}-healthcheck"
         @_stopService healthcheckServiceName, (error) =>
           return callback error if error?
           @_startService healthcheckServiceName, callback
+
+  _restartXServices: (x, callback=->) =>
+    debug '_restartXServices', x
+    serviceName = "#{@repositoryDasherized}-#{newColor}@#{x+1}"
+    registerServiceName = "#{@repositoryDasherized}-#{newColor}-register@#{x+1}"
+
+    # order is important, the service must run before the register service
+    # or fleetctl start hangs
+    async.series [
+      (cb) => @_stopAndDestroyService registerServiceName, cb
+      (cb) => @_stopAndDestroyService serviceName, cb
+      (cb) => @_startService serviceName, cb
+      (cb) => @_startService registerServiceName, cb
+    ], callback
 
   _stopAndDestroyService: (serviceName, callback=->) =>
     debug '_stopAndDestroyService', serviceName
