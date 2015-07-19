@@ -36,7 +36,9 @@ class DeployinateModel
           (callback) => @_startService registerServiceName, callback
         ] , (error) =>
           return callback error if error?
-          @_startService healthcheckServiceName, callback
+          @_stopAndDestroyService healthcheckServiceName, (error) =>
+            return callback error if error?
+            @_startService healthcheckServiceName, callback
 
   _stopAndDestroyService: (serviceName, callback=->) =>
     debug '_stopAndDestroyService', serviceName
