@@ -13,27 +13,27 @@ class DeployinateModel
     return callback new Error("invalid repository: #{@repository}") unless @repository?
     return callback new Error("invalid docker_url: #{@docker_url}") unless @docker_url?
     return callback new Error("invalid tag: #{@tag}") unless @tag?
-    @_getActiveAndNewColor (error, activeColor, newColor) =>
+    @_getActiveAndNewColor (error, @activeColor, @newColor) =>
       return callback error if error?
-      @_setKey "#{@repository}/#{newColor}/docker_url", "#{@docker_url}:#{@tag}", =>
+      @_setKey "#{@repository}/#{@newColor}/docker_url", "#{@docker_url}:#{@tag}", =>
         return callback error if error?
-        @_deployAll newColor, callback
+        @_deployAll callback
 
-  _deployAll: (newColor, callback=->) =>
+  _deployAll: (callback=->) =>
     @_getKey "#{@repository}/count", (error, count) =>
       return callback error if error?
       debug '_deployAll', count
       async.timesSeries count, @_restartXServices, (error) =>
         return callback error if error?
-        healthcheckServiceName = "#{@repositoryDasherized}-#{newColor}-healthcheck"
+        healthcheckServiceName = "#{@repositoryDasherized}-#{@newColor}-healthcheck"
         @_stopService healthcheckServiceName, (error) =>
           return callback error if error?
           @_startService healthcheckServiceName, callback
 
   _restartXServices: (x, callback=->) =>
     debug '_restartXServices', x
-    serviceName = "#{@repositoryDasherized}-#{newColor}@#{x+1}"
-    registerServiceName = "#{@repositoryDasherized}-#{newColor}-register@#{x+1}"
+    serviceName = "#{@repositoryDasherized}-#{@newColor}@#{x+1}"
+    registerServiceName = "#{@repositoryDasherized}-#{@newColor}-register@#{x+1}"
 
     # order is important, the service must run before the register service
     # or fleetctl start hangs
