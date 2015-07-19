@@ -38,7 +38,7 @@ class DeployinateModel
       , (error) =>
         return callback error if error?
         healthcheckServiceName = "#{@repositoryDasherized}-#{newColor}-healthcheck"
-        @_stopAndDestroyService healthcheckServiceName, (error) =>
+        @_stopService healthcheckServiceName, (error) =>
           return callback error if error?
           @_startService healthcheckServiceName, callback
 
