@@ -39,10 +39,10 @@ class DeployinateModel
     # order is important, the service must run before the register service
     # or fleetctl start hangs
     async.series [
-      (cb) => @_stopAndDestroyService registerServiceName, cb
-      (cb) => @_stopAndDestroyService serviceName, cb
-      (cb) => @_startService serviceName, cb
-      (cb) => @_startService registerServiceName, cb
+      async.apply @_stopAndDestroyService, registerServiceName
+      async.apply @_stopAndDestroyService, serviceName
+      async.apply @_startService, serviceName
+      async.apply @_startService, registerServiceName
     ], callback
 
   _stopAndDestroyService: (serviceName, callback=->) =>
