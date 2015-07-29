@@ -9,7 +9,6 @@ class DeployinateStatusModel
 
   getPeers: (callback=->) =>
     debug 'getPeers', process.env.ECTDCTL_PEERS
-    return
     peers = process.env.ECTDCTL_PEERS?.split ','
     _.map peers, (peer) =>
       parsedUrl = url.parse peer
