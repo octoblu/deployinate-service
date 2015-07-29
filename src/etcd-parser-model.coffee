@@ -7,9 +7,7 @@ class EtcdParserModel
 
   parse: (callback=->) =>
     result = @_parse @data
-    data = {}
-    data[@key] = _.object _.compact result
-    callback null, data
+    callback null, _.object _.compact result
 
   _parse: (data) =>
     _.flatten _.compact _.map data, (node) =>
