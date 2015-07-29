@@ -9,7 +9,7 @@ MeshbluAuthExpress = require 'express-meshblu-auth/src/meshblu-auth-express'
 meshbluHealthcheck = require 'express-meshblu-healthcheck'
 DeployinateController = require './src/deployinate-controller'
 
-PORT = process.env.DEPLOYINATE_SERVICE_PORT ? 80
+PORT = process.env.PORT ? 80
 
 app = express()
 app.use cors()
@@ -27,6 +27,7 @@ app.options '*', cors()
 deployinateController = new DeployinateController
 
 app.post '/deploy', deployinateController.deploy
+app.get '/status/:namespace/:service', deployinateController.getStatus
 
 server = app.listen PORT, ->
   host = server.address().address

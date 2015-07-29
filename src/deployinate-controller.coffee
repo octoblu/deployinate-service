@@ -4,6 +4,7 @@ debug        = require('debug')('deployinate-service:deployinate-controller')
 class DeployinateController
   constructor: (dependencies={}) ->
     @DeployinateModel = dependencies.DeployinateModel || require './deployinate-model'
+    @DeployinateStatusModel = dependencies.DeployinateStatusModel || require './deployinate-status-model'
 
   deploy: (request, response) =>
     {repository, updated_tags, docker_url} = request.body
@@ -13,5 +14,13 @@ class DeployinateController
       return response.status(401).json(error: 'unauthorized') if error?.message == 'unauthorized'
       return response.status(502).send(error: error.message) if error?
       return response.status(201).end()
+
+  getStatus: (request, response) =>
+    {namespace, service} = request.params
+    statusModel = new @DeployinateStatusModel namespace, service
+    statusModel.getStatus (error, statusInfo) ->
+      return response.status(401).json(error: 'unauthorized') if error?.message == 'unauthorized'
+      return response.status(502).send(error: error.message) if error?
+      return response.status(200).send statusInfo
 
 module.exports = DeployinateController
