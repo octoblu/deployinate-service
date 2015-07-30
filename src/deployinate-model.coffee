@@ -72,7 +72,7 @@ class DeployinateModel
 
   _destroyService: (service, callback=->) =>
     debug '_destroyService', service
-    exec "fleetctl destroy #{service}", (error, stdout, stderr) =>
+    exec "/bin/bash -c 'fleetctl destroy #{service}'", (error, stdout, stderr) =>
       debug 'destroyService error:', error.message if error?
       debug 'destroyService stdout:', stdout if stdout?
       debug 'destroyService stderr:', stderr if stderr?
@@ -80,7 +80,7 @@ class DeployinateModel
 
   _stopService: (service, callback=->) =>
     debug '_stopService', service
-    exec "fleetctl stop #{service}", (error, stdout, stderr) =>
+    exec "/bin/bash -c 'fleetctl stop #{service}'", (error, stdout, stderr) =>
       debug 'stopService error:', error.message if error?
       debug 'stopService stdout:', stdout if stdout?
       debug 'stopService stderr:', stderr if stderr?
@@ -89,7 +89,7 @@ class DeployinateModel
 
   _startService: (service, callback=->) =>
     debug '_startService', service
-    exec "fleetctl start #{service}", (error, stdout, stderr) =>
+    exec "/bin/bash -c 'fleetctl start #{service}'", (error, stdout, stderr) =>
       debug 'startService error:', error.message if error?
       debug 'startService stdout:', stdout if stdout?
       debug 'startService stderr:', stderr if stderr?
