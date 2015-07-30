@@ -2,6 +2,8 @@ _       = require 'lodash'
 async   = require 'async'
 {exec}  = require 'child_process'
 request = require 'request'
+EtcdManager = require './etcd-manager'
+DeployinateStatusModel = require './deployinate-status-model'
 debug   = require('debug')('deployinate-service:deployinate-model')
 
 class DeployinateModel
@@ -13,28 +15,33 @@ class DeployinateModel
     return callback new Error("invalid repository: #{@repository}") unless @repository?
     return callback new Error("invalid docker_url: #{@docker_url}") unless @docker_url?
     return callback new Error("invalid tag: #{@tag}") unless @tag?
-    @_getActiveAndNewColor (error, @activeColor, @newColor) =>
+
+    @_getStatus (error, @status) =>
       return callback error if error?
+      @newColor = @_getNewColor @status.color
+      debug 'New Color', @newColor
       @_setKey "#{@repository}/#{@newColor}/docker_url", "#{@docker_url}:#{@tag}", =>
         return callback error if error?
-        @_deployAll callback
+        @_deployAll parseInt(@status.count), callback
 
-  _deployAll: (callback=->) =>
-    @_getKey "#{@repository}/count", (error, count) =>
+  _deployAll: (count, callback=->) =>
+    debug '_deployAll', count
+    @_restartServices count, (error, res) =>
       return callback error if error?
-      debug '_deployAll', count
-      async.timesSeries parseInt(count), @_restartXServices, (error, res) =>
-        return callback error if error?
-        debug 'async.timesSeries', res
-        healthcheckServiceName = "#{@repositoryDasherized}-#{@newColor}-healthcheck"
-        @_stopService healthcheckServiceName, (error) =>
-          return callback error if error?
-          @_startService healthcheckServiceName, callback
 
-  _restartXServices: (x, callback=->) =>
-    debug '_restartXServices', x
-    serviceName = "#{@repositoryDasherized}-#{@newColor}@#{x+1}"
-    registerServiceName = "#{@repositoryDasherized}-#{@newColor}-register@#{x+1}"
+      healthcheckServiceName = "#{@repositoryDasherized}-#{@newColor}-healthcheck"
+      @_stopService healthcheckServiceName, (error) =>
+        return callback error if error?
+        @_startService healthcheckServiceName, callback
+
+  _getStatus: (callback=->) =>
+    deployinateStatus = new DeployinateStatusModel @repository
+    deployinateStatus.getStatus callback
+
+  _restartServices: (count, callback=->) =>
+    debug '_restartServices', count
+    serviceName = "#{@repositoryDasherized}-#{@newColor}@{1..#{count}}"
+    registerServiceName = "#{@repositoryDasherized}-#{@newColor}-register@{1..#{count}}"
 
     # order is important, the service must run before the register service
     # or fleetctl start hangs
@@ -53,28 +60,15 @@ class DeployinateModel
         return callback error if error?
         callback()
 
-  _getKey: (key, callback=->) =>
-    debug 'getKey', key
-    request.get "#{process.env.FLEETCTL_ENDPOINT}/v2/keys/#{key}", json: true, (error, body, response) =>
-      return callback error if error?
-      callback null, response?.node?.value
-
   _setKey: (key, value, callback=->) =>
     debug 'setKey', key, value
-    request.put "#{process.env.FLEETCTL_ENDPOINT}/v2/keys/#{key}", form: {value: value}, (error, body, response) =>
-      return callback error if error?
-      callback null, response?.node?.value
+    etcdManager = new EtcdManager()
+    etcd = etcdManager.getEtcd()
+    etcd.set key, value, callback
 
-  _getActiveAndNewColor: (callback=->) =>
-    @_getKey "#{@repository}/active", (error, activeColor) =>
-      return callback error if error?
-      debug '_getActiveAndNewColor', activeColor
-      if activeColor == 'green'
-        newColor = 'blue'
-      else
-        newColor = 'green'
-
-      callback null, activeColor, newColor
+  _getNewColor: (activeColor, callback=->) =>
+    return 'blue' if activeColor == 'green'
+    'green'
 
   _destroyService: (service, callback=->) =>
     debug '_destroyService', service

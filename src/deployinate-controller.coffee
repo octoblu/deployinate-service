@@ -17,7 +17,7 @@ class DeployinateController
 
   getStatus: (request, response) =>
     {namespace, service} = request.params
-    statusModel = new @DeployinateStatusModel namespace, service
+    statusModel = new @DeployinateStatusModel "#{namespace}/#{service}"
     statusModel.getStatus (error, statusInfo) ->
       return response.status(401).json(error: 'unauthorized') if error?.message == 'unauthorized'
       return response.status(502).send(error: error.message) if error?
