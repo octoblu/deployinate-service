@@ -16,13 +16,13 @@ class DeployinateModel
     return callback new Error("invalid docker_url: #{@docker_url}") unless @docker_url?
     return callback new Error("invalid tag: #{@tag}") unless @tag?
 
-    @_getStatus (error, @status) =>
+    @_getStatus (error, status) =>
       return callback error if error?
-      @newColor = @_getNewColor @status.color
+      @newColor = @_getNewColor status?.service?.active
       debug 'New Color', @newColor
       @_setKey "#{@repository}/#{@newColor}/docker_url", "#{@docker_url}:#{@tag}", =>
         return callback error if error?
-        @_deployAll parseInt(@status.count), callback
+        @_deployAll parseInt(status?.service?.count), callback
 
   _deployAll: (count, callback=->) =>
     debug '_deployAll', count
