@@ -27,6 +27,7 @@ app.options '*', cors()
 deployinateController = new DeployinateController
 
 app.post '/deploy', deployinateController.deploy
+app.post '/rollback/:namespace/:service', deployinateController.rollback
 app.get '/status/:namespace/:service', deployinateController.getStatus
 
 server = app.listen PORT, ->
