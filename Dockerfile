@@ -3,5 +3,5 @@ MAINTAINER Octoblu <docker@octoblu.com>
 
 EXPOSE 80
 
-RUN curl --silent -L https://github.com/coreos/fleet/releases/download/v0.10.2/fleet-v0.10.2-linux-amd64.tar.gz | tar -xz -C /opt/
-ENV PATH $PATH:/opt/fleet-v0.10.2-linux-amd64
+RUN curl --silent -L https://cdn.octoblu.com/fleet/fleet-linux-amd64.tar.gz | tar -xz -C /opt/
+ENV PATH $PATH:/opt/fleet-linux-amd64
