@@ -35,7 +35,7 @@ class DeployinateModel
     healthcheckServiceName = "#{@repositoryDasherized}-#{@newColor}-healthcheck"
 
     async.series [
-      async.apply @_stopService healthcheckServiceName
+      async.apply @_stopService, healthcheckServiceName
       async.apply @_stopAndDestroyService, "#{registerServiceName} #{serviceName}"
       async.apply @_startService, "#{serviceName} #{registerServiceName} #{healthcheckServiceName}"
     ], callback
