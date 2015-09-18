@@ -22,17 +22,7 @@ class DeployinateModel
       debug 'New Color', @newColor
       @_setKey "#{@repository}/#{@newColor}/docker_url", "#{@docker_url}:#{@tag}", =>
         return callback error if error?
-        @_deployAll parseInt(status?.service?.count), callback
-
-  _deployAll: (count, callback=->) =>
-    debug '_deployAll', count
-    @_restartServices count, (error, res) =>
-      return callback error if error?
-
-      healthcheckServiceName = "#{@repositoryDasherized}-#{@newColor}-healthcheck"
-      @_stopService healthcheckServiceName, (error) =>
-        return callback error if error?
-        @_startService healthcheckServiceName, callback
+        @_restartServices parseInt(status?.service?.count), callback
 
   _getStatus: (callback=->) =>
     deployinateStatus = new DeployinateStatusModel @repository
@@ -42,14 +32,12 @@ class DeployinateModel
     debug '_restartServices', count
     serviceName = "#{@repositoryDasherized}-#{@newColor}@{1..#{count}}"
     registerServiceName = "#{@repositoryDasherized}-#{@newColor}-register@{1..#{count}}"
+    healthcheckServiceName = "#{@repositoryDasherized}-#{@newColor}-healthcheck"
 
-    # order is important, the service must run before the register service
-    # or fleetctl start hangs
     async.series [
-      async.apply @_stopAndDestroyService, registerServiceName
-      async.apply @_stopAndDestroyService, serviceName
-      async.apply @_startService, serviceName
-      async.apply @_startService, registerServiceName
+      async.apply @_stopService healthcheckServiceName
+      async.apply @_stopAndDestroyService, "#{registerServiceName} #{serviceName}"
+      async.apply @_startService, "#{serviceName} #{registerServiceName} #{healthcheckServiceName}"
     ], callback
 
   _stopAndDestroyService: (serviceName, callback=->) =>
