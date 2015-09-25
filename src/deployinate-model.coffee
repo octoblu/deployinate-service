@@ -64,6 +64,7 @@ class DeployinateModel
       debug 'destroyService error:', error.message if error?
       debug 'destroyService stdout:', stdout if stdout?
       debug 'destroyService stderr:', stderr if stderr?
+      return callback() if error?.killed == false
       callback error
 
   _stopService: (service, callback=->) =>
