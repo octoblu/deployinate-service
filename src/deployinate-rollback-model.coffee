@@ -16,15 +16,21 @@ class DeployinateRollbackModel
     @_getStatus (error, status) =>
       activeColor = status?.service?.active
       @newColor = @_getNewColor activeColor
-      @_setKey "#{@repository}/target", @newColor, =>
+      @_setKey "#{@repository}/current_step", 'begin rollback', (error) =>
         return callback error if error?
-        nowString = new Date().toISOString()
-        @_setKey "#{@repository}/#{@newColor}/deployed_at", nowString, =>
+        @_setKey "#{@repository}/target", @newColor, (error) =>
           return callback error if error?
-          healthcheckServiceName = "#{@repositoryDasherized}-#{@newColor}-healthcheck"
-          @_stopService healthcheckServiceName, (error) =>
+          nowString = new Date().toISOString()
+          @_setKey "#{@repository}/#{@newColor}/deployed_at", nowString, (error) =>
             return callback error if error?
-            @_startService healthcheckServiceName, callback
+            healthcheckServiceName = "#{@repositoryDasherized}-#{@newColor}-healthcheck"
+            @_stopService healthcheckServiceName, (error) =>
+              return callback error if error?
+              @_startService healthcheckServiceName, (error) =>
+                return callback error if error?
+                @_setKey "#{@repository}/current_step", 'end rollback', (error) =>
+                  return callback error if error?
+                  callback null
 
   _getNewColor: (activeColor, callback=->) =>
     return 'blue' if activeColor == 'green'
@@ -42,19 +48,23 @@ class DeployinateRollbackModel
 
   _stopService: (service, callback=->) =>
     debug '_stopService', service
-    exec "/bin/bash -c 'fleetctl stop #{service}'", (error, stdout, stderr) =>
-      debug 'stopService error:', error.message if error?
-      debug 'stopService stdout:', stdout if stdout?
-      debug 'stopService stderr:', stderr if stderr?
-      return callback() if error?.killed == false
-      callback error
+    @_setKey "#{@repository}/current_step", "stopService", (error) =>
+      return callback error if error?
+      exec "/bin/bash -c 'fleetctl stop #{service}'", (error, stdout, stderr) =>
+        debug 'stopService error:', error.message if error?
+        debug 'stopService stdout:', stdout if stdout?
+        debug 'stopService stderr:', stderr if stderr?
+        return callback() if error?.killed == false
+        callback error
 
   _startService: (service, callback=->) =>
     debug '_startService', service
-    exec "/bin/bash -c 'fleetctl start #{service}'", (error, stdout, stderr) =>
-      debug 'startService error:', error.message if error?
-      debug 'startService stdout:', stdout if stdout?
-      debug 'startService stderr:', stderr if stderr?
-      callback error
+    @_setKey "#{@repository}/current_step", "startService", (error) =>
+      return callback error if error?
+      exec "/bin/bash -c 'fleetctl start #{service}'", (error, stdout, stderr) =>
+        debug 'startService error:', error.message if error?
+        debug 'startService stdout:', stdout if stdout?
+        debug 'startService stderr:', stderr if stderr?
+        callback error
 
 module.exports = DeployinateRollbackModel

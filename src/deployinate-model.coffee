@@ -20,14 +20,20 @@ class DeployinateModel
       return callback error if error?
       @newColor = @_getNewColor status?.service?.active
       debug 'New Color', @newColor
-      @_setKey "#{@repository}/target", @newColor, =>
+      @_setKey "#{@repository}/current_step", 'begin deploy', (error) =>
         return callback error if error?
-        nowString = new Date().toISOString()
-        @_setKey "#{@repository}/#{@newColor}/deployed_at", nowString, =>
+        @_setKey "#{@repository}/target", @newColor, (error) =>
           return callback error if error?
-          @_setKey "#{@repository}/#{@newColor}/docker_url", "#{@docker_url}:#{@tag}", =>
+          nowString = new Date().toISOString()
+          @_setKey "#{@repository}/#{@newColor}/deployed_at", nowString, (error) =>
             return callback error if error?
-            @_restartServices parseInt(status?.service?.count), callback
+            @_setKey "#{@repository}/#{@newColor}/docker_url", "#{@docker_url}:#{@tag}", (error) =>
+              return callback error if error?
+              @_restartServices parseInt(status?.service?.count), (error) =>
+                return callback error if error?
+                @_setKey "#{@repository}/current_step", 'end deploy', (error) =>
+                  return callback error if error?
+                  callback null
 
   _getStatus: (callback=->) =>
     deployinateStatus = new DeployinateStatusModel @repository
@@ -65,28 +71,34 @@ class DeployinateModel
 
   _destroyService: (service, callback=->) =>
     debug '_destroyService', service
-    exec "/bin/bash -c 'fleetctl destroy #{service}'", (error, stdout, stderr) =>
-      debug 'destroyService error:', error.message if error?
-      debug 'destroyService stdout:', stdout if stdout?
-      debug 'destroyService stderr:', stderr if stderr?
-      return callback() if error?.killed == false
-      callback error
+    @_setKey "#{@repository}/current_step", "destroyService", (error) =>
+      return callback error if error?
+      exec "/bin/bash -c 'fleetctl destroy #{service}'", (error, stdout, stderr) =>
+        debug 'destroyService error:', error.message if error?
+        debug 'destroyService stdout:', stdout if stdout?
+        debug 'destroyService stderr:', stderr if stderr?
+        return callback() if error?.killed == false
+        callback error
 
   _stopService: (service, callback=->) =>
     debug '_stopService', service
-    exec "/bin/bash -c 'fleetctl stop #{service}'", (error, stdout, stderr) =>
-      debug 'stopService error:', error.message if error?
-      debug 'stopService stdout:', stdout if stdout?
-      debug 'stopService stderr:', stderr if stderr?
-      return callback() if error?.killed == false
-      callback error
+    @_setKey "#{@repository}/current_step", "stopService", (error) =>
+      return callback error if error?
+      exec "/bin/bash -c 'fleetctl stop #{service}'", (error, stdout, stderr) =>
+        debug 'stopService error:', error.message if error?
+        debug 'stopService stdout:', stdout if stdout?
+        debug 'stopService stderr:', stderr if stderr?
+        return callback() if error?.killed == false
+        callback error
 
   _startService: (service, callback=->) =>
     debug '_startService', service
-    exec "/bin/bash -c 'fleetctl start #{service}'", (error, stdout, stderr) =>
-      debug 'startService error:', error.message if error?
-      debug 'startService stdout:', stdout if stdout?
-      debug 'startService stderr:', stderr if stderr?
-      callback error
+    @_setKey "#{@repository}/current_step", "startService", (error) =>
+      return callback error if error?
+      exec "/bin/bash -c 'fleetctl start #{service}'", (error, stdout, stderr) =>
+        debug 'startService error:', error.message if error?
+        debug 'startService stdout:', stdout if stdout?
+        debug 'startService stderr:', stderr if stderr?
+        callback error
 
 module.exports = DeployinateModel
