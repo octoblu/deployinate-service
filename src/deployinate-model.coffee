@@ -18,7 +18,8 @@ class DeployinateModel
 
     @_getStatus (error, status) =>
       return callback error if error?
-      @newColor = @_getNewColor status?.service?.active
+      activeColor = status?.service?.active
+      @newColor = @_getNewColor activeColor
       debug 'New Color', @newColor
 
       async.series [
@@ -26,6 +27,7 @@ class DeployinateModel
         async.apply @_setKey, "#{@repository}/target", @newColor
         async.apply @_setKey, "#{@repository}/#{@newColor}/deployed_at", new Date().toISOString()
         async.apply @_setKey, "#{@repository}/#{@newColor}/docker_url", "#{@docker_url}:#{@tag}"
+        async.apply @_stopService, "#{@repositoryDasherized}-#{activeColor}-healthcheck"
         async.apply @_restartServices, parseInt(status?.service?.count)
         async.apply @_setKey, "#{@repository}/current_step", 'end deploy'
       ], callback
