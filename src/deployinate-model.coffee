@@ -22,7 +22,8 @@ class DeployinateModel
       debug 'New Color', @newColor
       @_setKey "#{@repository}/target", @newColor, =>
         return callback error if error?
-        @_setKey "#{@repository}/#{@newColor}/deployed_at", _.now(), =>
+        nowString = new Date().toISOString()
+        @_setKey "#{@repository}/#{@newColor}/deployed_at", nowString, =>
           return callback error if error?
           @_setKey "#{@repository}/#{@newColor}/docker_url", "#{@docker_url}:#{@tag}", =>
             return callback error if error?

@@ -16,10 +16,15 @@ class DeployinateRollbackModel
     @_getStatus (error, status) =>
       activeColor = status?.service?.active
       @newColor = @_getNewColor activeColor
-      healthcheckServiceName = "#{@repositoryDasherized}-#{@newColor}-healthcheck"
-      @_stopService healthcheckServiceName, (error) =>
+      @_setKey "#{@repository}/target", @newColor, =>
         return callback error if error?
-        @_startService healthcheckServiceName, callback
+        nowString = new Date().toISOString()
+        @_setKey "#{@repository}/#{@newColor}/deployed_at", nowString, =>
+          return callback error if error?
+          healthcheckServiceName = "#{@repositoryDasherized}-#{@newColor}-healthcheck"
+          @_stopService healthcheckServiceName, (error) =>
+            return callback error if error?
+            @_startService healthcheckServiceName, callback
 
   _getNewColor: (activeColor, callback=->) =>
     return 'blue' if activeColor == 'green'
