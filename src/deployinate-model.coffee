@@ -20,20 +20,15 @@ class DeployinateModel
       return callback error if error?
       @newColor = @_getNewColor status?.service?.active
       debug 'New Color', @newColor
-      @_setKey "#{@repository}/current_step", 'begin deploy', (error) =>
-        return callback error if error?
-        @_setKey "#{@repository}/target", @newColor, (error) =>
-          return callback error if error?
-          nowString = new Date().toISOString()
-          @_setKey "#{@repository}/#{@newColor}/deployed_at", nowString, (error) =>
-            return callback error if error?
-            @_setKey "#{@repository}/#{@newColor}/docker_url", "#{@docker_url}:#{@tag}", (error) =>
-              return callback error if error?
-              @_restartServices parseInt(status?.service?.count), (error) =>
-                return callback error if error?
-                @_setKey "#{@repository}/current_step", 'end deploy', (error) =>
-                  return callback error if error?
-                  callback null
+
+      async.series [
+        async.apply @_setKey, "#{@repository}/current_step", 'begin deploy'
+        async.apply @_setKey, "#{@repository}/target", @newColor
+        async.apply @_setKey, "#{@repository}/#{@newColor}/deployed_at", new Date().toISOString()
+        async.apply @_setKey, "#{@repository}/#{@newColor}/docker_url", "#{@docker_url}:#{@tag}"
+        async.apply @_restartServices, parseInt(status?.service?.count)
+        async.apply @_setKey, "#{@repository}/current_step", 'end deploy'
+      ], callback
 
   _getStatus: (callback=->) =>
     deployinateStatus = new DeployinateStatusModel @repository

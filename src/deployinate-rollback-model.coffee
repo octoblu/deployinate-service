@@ -16,21 +16,16 @@ class DeployinateRollbackModel
     @_getStatus (error, status) =>
       activeColor = status?.service?.active
       @newColor = @_getNewColor activeColor
-      @_setKey "#{@repository}/current_step", 'begin rollback', (error) =>
-        return callback error if error?
-        @_setKey "#{@repository}/target", @newColor, (error) =>
-          return callback error if error?
-          nowString = new Date().toISOString()
-          @_setKey "#{@repository}/#{@newColor}/deployed_at", nowString, (error) =>
-            return callback error if error?
-            healthcheckServiceName = "#{@repositoryDasherized}-#{@newColor}-healthcheck"
-            @_stopService healthcheckServiceName, (error) =>
-              return callback error if error?
-              @_startService healthcheckServiceName, (error) =>
-                return callback error if error?
-                @_setKey "#{@repository}/current_step", 'end rollback', (error) =>
-                  return callback error if error?
-                  callback null
+      healthcheckServiceName = "#{@repositoryDasherized}-#{@newColor}-healthcheck"
+
+      async.series [
+        async.apply @_setKey, "#{@repository}/current_step", 'begin rollback'
+        async.apply @_setKey, "#{@repository}/target", @newColor
+        async.apply @_setKey, "#{@repository}/#{@newColor}/deployed_at", new Date().toISOString()
+        async.apply @_stopService, healthcheckServiceName
+        async.apply @_startService, healthcheckServiceName
+        async.apply @_setKey, "#{@repository}/current_step", 'end rollback'
+      ], callback
 
   _getNewColor: (activeColor, callback=->) =>
     return 'blue' if activeColor == 'green'
