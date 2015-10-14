@@ -20,9 +20,13 @@ class DeployinateModel
       return callback error if error?
       @newColor = @_getNewColor status?.service?.active
       debug 'New Color', @newColor
-      @_setKey "#{@repository}/#{@newColor}/docker_url", "#{@docker_url}:#{@tag}", =>
+      @_setKey "#{@repository}/target", @newColor, =>
         return callback error if error?
-        @_restartServices parseInt(status?.service?.count), callback
+        @_setKey "#{@repository}/#{@newColor}/deployed_at", _.now(), =>
+          return callback error if error?
+          @_setKey "#{@repository}/#{@newColor}/docker_url", "#{@docker_url}:#{@tag}", =>
+            return callback error if error?
+            @_restartServices parseInt(status?.service?.count), callback
 
   _getStatus: (callback=->) =>
     deployinateStatus = new DeployinateStatusModel @repository
