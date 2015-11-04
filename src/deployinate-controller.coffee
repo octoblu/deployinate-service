@@ -16,6 +16,15 @@ class DeployinateController
       return response.status(502).send(error: error.message) if error?
       return response.status(201).end()
 
+  deployWorker: (request, response) =>
+    {repository, updated_tags, docker_url} = request.body
+    tag = _.first _.keys(updated_tags)
+    @deployinateModel = new @DeployinateModel repository, docker_url, tag
+    @deployinateModel.deployWorker (error) ->
+      return response.status(401).json(error: 'unauthorized') if error?.message == 'unauthorized'
+      return response.status(502).send(error: error.message) if error?
+      return response.status(201).end()
+
   getStatus: (request, response) =>
     {namespace, service} = request.params
     statusModel = new @DeployinateStatusModel "#{namespace}/#{service}"
