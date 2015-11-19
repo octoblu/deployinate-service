@@ -9,7 +9,7 @@ class DeployinateController
 
   deploy: (request, response) =>
     {repository, updated_tags, docker_url} = request.body
-    tag = _.first _.keys(updated_tags)
+    tag = _.first updated_tags
     @deployinateModel = new @DeployinateModel repository, docker_url, tag
     @deployinateModel.deploy (error) ->
       return response.status(502).send(error: error.message) if error?
@@ -17,7 +17,7 @@ class DeployinateController
 
   deployWorker: (request, response) =>
     {repository, updated_tags, docker_url} = request.body
-    tag = _.first _.keys(updated_tags)
+    tag = _.first updated_tags
     @deployinateModel = new @DeployinateModel repository, docker_url, tag
     @deployinateModel.deployWorker (error) ->
       return response.status(502).send(error: error.message) if error?
