@@ -14,7 +14,7 @@ class DeployinateModel
   deploy: (callback=->) =>
     return callback new Error("invalid repository: #{@repository}") unless @repository?
     return callback new Error("invalid docker_url: #{@docker_url}") unless @docker_url?
-    return callback new Error("invalid tag: #{@tag}") unless @tag?
+    return callback new Error("invalid tag: #{@tag}") unless @_isTagValid()?
 
     @_getStatus (error, status) =>
       return callback error if error?
@@ -36,8 +36,13 @@ class DeployinateModel
     return callback new Error("invalid repository: #{@repository}") unless @repository?
     return callback new Error("invalid docker_url: #{@docker_url}") unless @docker_url?
     return callback new Error("invalid tag: #{@tag}") unless @tag?
-        
+
     @_setKey "#{@repository}/docker_url", "#{@docker_url}:#{@tag}", callback
+
+  _isTagValid: =>
+    return false unless @tag?
+
+    /v.+/.test @tag
 
   _getStatus: (callback=->) =>
     deployinateStatus = new DeployinateStatusModel @repository

@@ -12,7 +12,6 @@ class DeployinateController
     tag = _.first _.keys(updated_tags)
     @deployinateModel = new @DeployinateModel repository, docker_url, tag
     @deployinateModel.deploy (error) ->
-      return response.status(401).json(error: 'unauthorized') if error?.message == 'unauthorized'
       return response.status(502).send(error: error.message) if error?
       return response.status(201).end()
 
@@ -21,7 +20,6 @@ class DeployinateController
     tag = _.first _.keys(updated_tags)
     @deployinateModel = new @DeployinateModel repository, docker_url, tag
     @deployinateModel.deployWorker (error) ->
-      return response.status(401).json(error: 'unauthorized') if error?.message == 'unauthorized'
       return response.status(502).send(error: error.message) if error?
       return response.status(201).end()
 
@@ -29,7 +27,6 @@ class DeployinateController
     {namespace, service} = request.params
     statusModel = new @DeployinateStatusModel "#{namespace}/#{service}"
     statusModel.getStatus (error, statusInfo) ->
-      return response.status(401).json(error: 'unauthorized') if error?.message == 'unauthorized'
       return response.status(502).send(error: error.message) if error?
       return response.status(200).send statusInfo
 
@@ -37,7 +34,6 @@ class DeployinateController
     {namespace, service} = request.params
     rollbackModel = new @DeployinateRollbackModel "#{namespace}/#{service}"
     rollbackModel.rollback (error) ->
-      return response.status(401).json(error: 'unauthorized') if error?.message == 'unauthorized'
       return response.status(502).send(error: error.message) if error?
       return response.status(201).end()
 
