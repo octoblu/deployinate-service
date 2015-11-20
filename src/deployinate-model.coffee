@@ -45,7 +45,14 @@ class DeployinateModel
     return callback new Error("invalid docker_url: #{@docker_url}") unless @docker_url?
     return callback new Error("invalid tag: #{@tag}") unless @tag?
 
-    @_setKey "#{@repository}/docker_url", "#{@docker_url}:#{@tag}", callback
+    @_getTravisBuildStatus (error, passed) =>
+      return callback error if error?
+      unless passed
+        @_setKey "#{@repository}/current_step", 'travis status failed'
+        callback new Error "travis status failed"
+        return
+
+      @_setKey "#{@repository}/docker_url", "#{@docker_url}:#{@tag}", callback
 
   _isTagValid: =>
     return false unless @tag?
