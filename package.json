@@ -1,6 +1,6 @@
 {
   "name": "deployinate-service",
-  "version": "1.12.2",
+  "version": "1.13.0",
   "description": "",
   "main": "server.js",
   "scripts": {
@@ -37,6 +37,6 @@
     "meshblu-http": "^3.4.1",
     "morgan": "^1.5.3",
     "node-etcd": "^4.1.0",
-    "request": "^2.54.0"
+    "request": "^2.67.0"
   }
 }

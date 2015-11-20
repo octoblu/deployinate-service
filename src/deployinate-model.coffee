@@ -4,6 +4,7 @@ async   = require 'async'
 request = require 'request'
 EtcdManager = require './etcd-manager'
 DeployinateStatusModel = require './deployinate-status-model'
+TravisStatusModel = require './travis-status-model'
 debug   = require('debug')('deployinate-service:deployinate-model')
 
 class DeployinateModel
@@ -22,15 +23,22 @@ class DeployinateModel
       @newColor = @_getNewColor activeColor
       debug 'New Color', @newColor
 
-      async.series [
-        async.apply @_setKey, "#{@repository}/current_step", 'begin deploy'
-        async.apply @_setKey, "#{@repository}/target", @newColor
-        async.apply @_setKey, "#{@repository}/#{@newColor}/deployed_at", new Date().toISOString()
-        async.apply @_setKey, "#{@repository}/#{@newColor}/docker_url", "#{@docker_url}:#{@tag}"
-        async.apply @_stopService, "#{@repositoryDasherized}-#{activeColor}-healthcheck"
-        async.apply @_restartServices, parseInt(status?.service?.count)
-        async.apply @_setKey, "#{@repository}/current_step", 'end deploy'
-      ], callback
+      @_getTravisBuildStatus (error, passed) =>
+        return callback error if error?
+        unless passed
+          @_setKey "#{@repository}/current_step", 'travis status failed'
+          callback new Error "travis status failed"
+          return
+
+        async.series [
+          async.apply @_setKey, "#{@repository}/current_step", 'begin deploy'
+          async.apply @_setKey, "#{@repository}/target", @newColor
+          async.apply @_setKey, "#{@repository}/#{@newColor}/deployed_at", new Date().toISOString()
+          async.apply @_setKey, "#{@repository}/#{@newColor}/docker_url", "#{@docker_url}:#{@tag}"
+          async.apply @_stopService, "#{@repositoryDasherized}-#{activeColor}-healthcheck"
+          async.apply @_restartServices, parseInt(status?.service?.count)
+          async.apply @_setKey, "#{@repository}/current_step", 'end deploy'
+        ], callback
 
   deployWorker: (callback) =>
     return callback new Error("invalid repository: #{@repository}") unless @repository?
@@ -46,7 +54,13 @@ class DeployinateModel
 
   _getStatus: (callback=->) =>
     deployinateStatus = new DeployinateStatusModel @repository
-    deployinateStatus.getStatus callback
+    @_setKey "#{@repository}/current_step", 'fetching service status', =>
+      deployinateStatus.getStatus callback
+
+  _getTravisBuildStatus: (callback=->) =>
+    travisStatus = new TravisStatusModel repository: @repository, tag: @tag
+    @_setKey "#{@repository}/current_step", 'checking travis status', =>
+      travisStatus.getStatus callback
 
   _restartServices: (count, callback=->) =>
     debug '_restartServices', count
