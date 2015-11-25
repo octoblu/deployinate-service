@@ -52,7 +52,10 @@ class DeployinateModel
         callback new Error "travis status failed"
         return
 
-      @_setKey "#{@repository}/docker_url", "#{@docker_url}:#{@tag}", callback
+      async.series [
+        async.apply @_setKey, "#{@repository}/docker_url", "#{@docker_url}:#{@tag}"
+        async.apply @_setKey, "#{@repository}/current_step", 'end deploy'
+      ], callback
 
   _isTagValid: =>
     return false unless @tag?
