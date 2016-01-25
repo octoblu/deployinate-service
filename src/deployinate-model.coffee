@@ -53,7 +53,7 @@ class DeployinateModel
         return
 
       async.series [
-        async.apply @_setKey, "#{@repository}/#{@newColor}/deployed_at", new Date().toISOString()
+        async.apply @_setKey, "#{@repository}/deployed_at", new Date().toISOString()
         async.apply @_setKey, "#{@repository}/docker_url", "#{@docker_url}:#{@tag}"
         async.apply @_setKey, "#{@repository}/current_step", 'end deploy'
         async.apply @_setKey, "#{@repository}/restart", new Date().toISOString() # should be last
