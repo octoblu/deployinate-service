@@ -2,7 +2,7 @@ _                = require 'lodash'
 url              = require 'url'
 async            = require 'async'
 EtcdManager      = require './etcd-manager'
-@EtcdParserModel = require './etcd-parser-model'
+EtcdParserModel = require './etcd-parser-model'
 debug   = require('debug')('deployinate-service:deployinate-status-model')
 
 class DeployinateStatusModel
@@ -35,7 +35,7 @@ class DeployinateStatusModel
       return callback null, {error: error.message} if error?
       return callback null, {error: keys} unless _.isPlainObject(keys)
 
-      @etcdParser = new @EtcdParserModel key, keys
+      @etcdParser = new EtcdParserModel key, keys
       @etcdParser.parse (error, data) =>
         callback error, data
 
@@ -47,7 +47,7 @@ class DeployinateStatusModel
       return callback null, {error: error.message} if error?
       return callback null, {error: keys} unless _.isPlainObject(keys)
 
-      @etcdParser = new @EtcdParserModel key, keys
+      @etcdParser = new EtcdParserModel key, keys
       @etcdParser.parse (error, data) =>
         return callback error if error?
 
@@ -71,7 +71,7 @@ class DeployinateStatusModel
       return callback null, {error: error.message} if error?
       return callback null, {error: keys} unless _.isPlainObject(keys)
 
-      @etcdParser = new @EtcdParserModel key, keys
+      @etcdParser = new EtcdParserModel key, keys
       @etcdParser.parse (error, data) =>
         return callback error if error?
 
