@@ -4,7 +4,7 @@ cors               = require 'cors'
 bodyParser         = require 'body-parser'
 errorHandler       = require 'errorhandler'
 meshbluHealthcheck = require 'express-meshblu-healthcheck'
-meshbluAuth        = require 'express-meshblu-auth'
+meshbluAuthDevice  = require 'express-meshblu-auth-device'
 debug              = require('debug')('deployinate-service:server')
 Router             = require './router'
 
@@ -30,7 +30,7 @@ class Server
     app.use morgan('dev', immediate: false)
     app.use cors()
     app.use errorHandler()
-    app.use meshbluAuth @meshbluConfig
+    app.use meshbluAuthDevice @meshbluConfig
     app.use bodyParser.urlencoded limit: '50mb', extended : true
     app.use bodyParser.json limit : '50mb'
 

@@ -29,21 +29,36 @@ class DeployinateController
   deployWorker: (request, response) =>
     {repository, updated_tags, docker_url} = request.body
     tag = _.first updated_tags
-    @deployinateModel = new @DeployinateModel repository, docker_url, tag
+    @deployinateModel = new @DeployinateModel {
+      repository
+      docker_url
+      tag
+      @ETCDCTL_PEERS
+      @TRAVIS_ORG_URL
+      @TRAVIS_ORG_TOKEN
+      @TRAVIS_PRO_URL
+      @TRAVIS_PRO_TOKEN
+    }
     @deployinateModel.deployWorker (error) ->
       return response.status(422).send(error: error.message) if error?
       return response.status(201).end()
 
   getStatus: (request, response) =>
     {namespace, service} = request.params
-    statusModel = new @DeployinateStatusModel "#{namespace}/#{service}"
+    statusModel = new @DeployinateStatusModel {
+      repository: "#{namespace}/#{service}"
+      @ETCDCTL_PEERS
+    }
     statusModel.getStatus (error, statusInfo) ->
       return response.status(422).send(error: error.message) if error?
       return response.status(200).send statusInfo
 
   rollback: (request, response) =>
     {namespace, service} = request.params
-    rollbackModel = new @DeployinateRollbackModel "#{namespace}/#{service}"
+    rollbackModel = new @DeployinateRollbackModel {
+      repository: "#{namespace}/#{service}"
+      @ETCDCTL_PEERS
+    }
     rollbackModel.rollback (error) ->
       return response.status(422).send(error: error.message) if error?
       return response.status(201).end()
