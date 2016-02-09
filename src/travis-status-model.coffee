@@ -4,27 +4,31 @@ async   = require 'async'
 debug   = require('debug')('deployinate-service:travis-status-model')
 
 class TravisStatusModel
-  constructor: ({@repository, @tag}, dependencies={}) ->
+  constructor: (options) ->
+    {@repository, @tag} = options
+    {@TRAVIS_PRO_URL, @TRAVIS_ORG_URL, @TRAVIS_ORG_TOKEN, @TRAVIS_PRO_TOKEN} = options
 
-  getStatus: (callback=->) =>
+  getStatus: (callback) =>
     async.parallel [
-      async.apply @_getBuild, host: "api.travis-ci.org", token: process.env.TRAVIS_TOKEN
-      async.apply @_getBuild, host: "api.travis-ci.com", token: process.env.TRAVIS_PRO_TOKEN
+      async.apply @_getBuild, baseUri: @TRAVIS_ORG_URL, token: @TRAVIS_ORG_TOKEN
+      async.apply @_getBuild, baseUri: @TRAVIS_PRO_URL, token: @TRAVIS_PRO_TOKEN
     ], (error, builds) =>
       return callback error if error?
       passed = _.first _.compact builds
       callback null, passed
 
-  _getBuild: ({host, token}, callback) =>
+  _getBuild: ({baseUri, token}, callback) =>
     options =
+      uri: "/repos/#{@repository}/builds"
+      baseUrl: baseUri
       json: true
       headers:
         'User-Agent': 'Octoblu Deployinate/1.0.0'
         'Authorization': "token #{token}"
 
-    request.get "https://#{host}/repos/#{@repository}/builds", options, (error, response, body) =>
+    request.get options, (error, response, body) =>
       return callback error if error?
-      debug "searching #{host} builds for #{@tag}"
+      debug "searching #{baseUri} builds for #{@tag}"
 
       build = _.findWhere body, branch: @tag
       return callback null, false unless build?
