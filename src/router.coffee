@@ -6,7 +6,15 @@ class Router
     {ETCDCTL_PEERS, GOVERNATOR_MINOR_URL} = options
     {TRAVIS_ORG_URL, TRAVIS_ORG_TOKEN} = options
     {TRAVIS_PRO_URL, TRAVIS_PRO_TOKEN} = options
-    @deployinateController = new DeployinateController
+
+    @deployinateController = new DeployinateController {
+      ETCDCTL_PEERS
+      TRAVIS_ORG_URL
+      TRAVIS_ORG_TOKEN
+      TRAVIS_PRO_URL
+      TRAVIS_PRO_TOKEN
+    }
+    
     @deploymentsController = new DeploymentsController {
       GOVERNATOR_MINOR_URL
       ETCDCTL_PEERS

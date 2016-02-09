@@ -1,67 +1,104 @@
-http = require 'http'
 request = require 'request'
-shmock = require 'shmock'
+shmock  = require 'shmock'
+url     = require 'url'
 Server = require '../../src/server'
 
+# xdescribed cause the implementation has to shell out
+# to fleetctl
 xdescribe 'POST /deploy', ->
-  beforeEach ->
-    @meshblu = shmock 0xb33f
+  beforeEach (done) ->
+    @meshbluServer = shmock()
+    meshbluAddress = @meshbluServer.address()
+
+    @governatorMinor = shmock()
+    GOVERNATOR_MINOR_URL = url.format
+      protocol: 'http'
+      hostname: 'localhost'
+      port: @governatorMinor.address().port
+      pathname: '/deployments'
+      auth: 'guv-uuid:guv-token'
+
+    @etcd = shmock()
+    ETCDCTL_PEERS = url.format protocol: 'http', hostname: 'localhost', port: @etcd.address().port
+
+    @travisOrg = shmock()
+    TRAVIS_ORG_URL = url.format protocol: 'http', hostname: 'localhost', port: @travisOrg.address().port
+    TRAVIS_ORG_TOKEN = 'travis-org-token'
+
+    @travisPro = shmock()
+    TRAVIS_PRO_URL = url.format protocol: 'http', hostname: 'localhost', port: @travisPro.address().port
+    TRAVIS_PRO_TOKEN = 'travis-pro-token'
+
+    meshbluConfig =
+      protocol: 'http'
+      server: 'localhost'
+      port: meshbluAddress.port
+      uuid: 'deploy-uuid'
+
+    @sut = new Server {
+      ETCDCTL_PEERS
+      GOVERNATOR_MINOR_URL
+      TRAVIS_ORG_URL
+      TRAVIS_ORG_TOKEN
+      TRAVIS_PRO_URL
+      TRAVIS_PRO_TOKEN
+      meshbluConfig
+    }
+    @sut.run done
 
   afterEach (done) ->
-    @meshblu.close => done()
+    @sut.close done
+
+  afterEach (done) ->
+    @travisPro.close done
+
+  afterEach (done) ->
+    @travisOrg.close done
+
+  afterEach (done) ->
+    @etcd.close done
+
+  afterEach (done) ->
+    @governatorMinor.close done
+
+  afterEach (done) ->
+    @meshbluServer.close done
+
+  beforeEach ->
+    {port} = @sut.address()
+    @baseUrl = url.format protocol: 'http', hostname: 'localhost', port: port
+
+    deployAuth = new Buffer('deploy-uuid:deploy-token').toString 'base64'
+    guvAuth = new Buffer('guv-uuid:guv-token').toString 'base64'
+
+    @meshbluServer
+      .get '/v2/whoami'
+      .set 'Authorization', "Basic #{deployAuth}"
+      .reply 200, uuid: 'governator-uuid'
+
+    @travisOrg
+      .get '/repos/octoblu/some-service/builds'
+      .set 'Authorization', 'token travis-org-token'
+      .reply 200, [{branch: 'v1.0.2', result: 0}]
+
+    @governatorMinor
+      .post '/deployments'
+      .set 'Authorization', "Basic #{guvAuth}"
+      .reply 201, [{branch: 'v1.0.2', result: 0}]
 
   beforeEach (done) ->
-    meshbluConfig =
-      server: 'localhost'
-      port: 0xb33f
+    options =
+      uri: '/deploy'
+      baseUrl: @baseUrl
+      auth: {username: 'deploy-uuid', password: 'deploy-token'}
+      json:
+        repository: 'octoblu/some-service'
+        docker_url: 'quay.io/octoblu/some-service'
+        updated_tags: ['v1.0.2']
 
-    @server = new Server
-      port: undefined, {meshbluConfig: meshbluConfig}
-    @server.run =>
-      @serverPort = @server.address().port
+    request.post options, (error, @response, @body) =>
+      return done error if error?
       done()
 
-  afterEach (done) ->
-    @server.stop => done()
-
-  beforeEach (done) ->
-    auth =
-      username: 'team-uuid'
-      password: 'team-token'
-
-    device =
-      uuid: 'virtual-device-uuid'
-      foo: 'bar'
-      meshblu: 'pwned!'
-      owner: 'someone-else'
-      token: 'steal-me'
-      sendWhitelist: []
-      recieveWhitelist: []
-      configureWhitelist: []
-      discoverWhitelist: []
-      sendBlacklist: []
-      recieveBlacklist: []
-      configureBlacklist: []
-      discoverBlacklist: []
-      sendAsWhitelist: []
-      recieveAsWhitelist: []
-      configureAsWhitelist: []
-      discoverAsWhitelist: []
-
-    options =
-      auth: auth
-      json: device
-
-    @meshblu.get('/v2/whoami')
-      .reply(200, '{"uuid": "team-uuid"}')
-
-    @patchHandler = @meshblu.patch('/v2/devices/real-device-uuid')
-      .send(foo: 'bar')
-      .reply(204, http.STATUS_CODES[204])
-
-    request.post "http://localhost:#{@serverPort}/config/real-device-uuid", options, (@error, @response, @body) =>
-      done @error
-
-  it 'should update the real device in meshblu', ->
-    expect(@response.statusCode).to.equal 204
-    expect(@patchHandler.isDone).to.be.true
+  it 'should return a 201', ->
+    expect(@response.statusCode).to.equal 201, JSON.stringify(@body)

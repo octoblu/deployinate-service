@@ -1,13 +1,13 @@
-_       = require 'lodash'
-url     = require 'url'
-async   = require 'async'
-EtcdManager = require './etcd-manager'
+_                = require 'lodash'
+url              = require 'url'
+async            = require 'async'
+EtcdManager      = require './etcd-manager'
+@EtcdParserModel = require './etcd-parser-model'
 debug   = require('debug')('deployinate-service:deployinate-status-model')
 
 class DeployinateStatusModel
-  constructor: (@repository, dependencies={}) ->
-    @EtcdParserModel = dependencies.EtcdParserModel ? require './etcd-parser-model'
-    etcdManager = new EtcdManager()
+  constructor: ({@repository, ETCDCTL_PEERS}) ->
+    etcdManager = new EtcdManager {ETCDCTL_PEERS}
     @etcd = etcdManager.getEtcd()
 
   getStatus: (callback=->) =>

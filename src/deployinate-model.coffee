@@ -8,8 +8,10 @@ TravisStatusModel = require './travis-status-model'
 debug   = require('debug')('deployinate-service:deployinate-model')
 
 class DeployinateModel
-  constructor: (@repository, @docker_url, @tag, dependencies={}) ->
-    debug '.new', @repository, @docker_url, @tag
+  constructor: (options) ->
+    {@repository, @docker_url, @tag, @ETCDCTL_PEERS} = options
+    {@TRAVIS_PRO_URL,@TRAVIS_ORG_URL} = options
+    {@TRAVIS_PRO_TOKEN,@TRAVIS_ORG_TOKEN} = options
     @repositoryDasherized = @repository?.replace '/', '-'
 
   deploy: (callback=->) =>
@@ -65,12 +67,19 @@ class DeployinateModel
     /v.+/.test @tag
 
   _getStatus: (callback=->) =>
-    deployinateStatus = new DeployinateStatusModel @repository
+    deployinateStatus = new DeployinateStatusModel {@repository, @ETCDCTL_PEERS}
     @_setKey "#{@repository}/current_step", 'fetching service status', =>
       deployinateStatus.getStatus callback
 
   _getTravisBuildStatus: (callback=->) =>
-    travisStatus = new TravisStatusModel repository: @repository, tag: @tag
+    travisStatus = new TravisStatusModel {
+      @repository
+      @tag
+      @TRAVIS_ORG_URL
+      @TRAVIS_ORG_TOKEN
+      @TRAVIS_PRO_URL
+      @TRAVIS_PRO_TOKEN
+    }
     @_setKey "#{@repository}/current_step", 'checking travis status', =>
       travisStatus.getStatus callback
 
@@ -96,7 +105,7 @@ class DeployinateModel
 
   _setKey: (key, value, callback=->) =>
     debug 'setKey', key, value
-    etcdManager = new EtcdManager()
+    etcdManager = new EtcdManager {@ETCDCTL_PEERS}
     etcd = etcdManager.getEtcd()
     etcd.set key, value, callback
 
