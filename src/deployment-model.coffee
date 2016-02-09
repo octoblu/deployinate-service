@@ -27,10 +27,12 @@ class DeploymentModel
         return
 
       options =
-        etcdDir: @repository
-        dockerUrl: "#{@docker_url}:#{@tag}"
+        uri: @GOVERNATOR_MINOR_URL
+        json:
+          etcdDir: @repository
+          dockerUrl: "#{@docker_url}:#{@tag}"
 
-      request.post @GOVERNATOR_MINOR_URL, options, (error, response) =>
+      request.post options, (error, response) =>
         return callback error if error?
         unless response.statusCode == 201
           error = new Error("Expected to get a 201, got an #{response.statusCode}")
