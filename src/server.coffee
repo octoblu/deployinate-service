@@ -10,10 +10,12 @@ Router             = require './router'
 
 class Server
   constructor: (options)->
-    {@port, @GOVERNATOR_MINOR_URL, @ETCDCTL_PEERS, @meshbluConfig} = options
+    {@port, @ETCDCTL_PEERS, @meshbluConfig} = options
+    {@GOVERNATOR_MAJOR_URL, @GOVERNATOR_MINOR_URL} = options
     {@TRAVIS_ORG_TOKEN, @TRAVIS_ORG_URL} = options
     {@TRAVIS_PRO_URL, @TRAVIS_PRO_TOKEN} = options
     throw new Error('ETCDCTL_PEERS is required') unless @ETCDCTL_PEERS?
+    throw new Error('GOVERNATOR_MAJOR_URL is required') unless @GOVERNATOR_MAJOR_URL?
     throw new Error('GOVERNATOR_MINOR_URL is required') unless @GOVERNATOR_MINOR_URL?
     throw new Error('TRAVIS_PRO_URL is required') unless @TRAVIS_PRO_URL?
     throw new Error('TRAVIS_ORG_URL is required') unless @TRAVIS_ORG_URL?
@@ -38,6 +40,7 @@ class Server
 
     router = new Router {
       @ETCDCTL_PEERS
+      @GOVERNATOR_MAJOR_URL
       @GOVERNATOR_MINOR_URL
       @TRAVIS_PRO_URL
       @TRAVIS_ORG_URL

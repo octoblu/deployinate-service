@@ -15,10 +15,12 @@ class Command
     TRAVIS_ORG_URL = 'https://api.travis-ci.org'
     TRAVIS_PRO_TOKEN = process.env.TRAVIS_PRO_TOKEN
     TRAVIS_ORG_TOKEN = process.env.TRAVIS_ORG_TOKEN
+    GOVERNATOR_MAJOR_URL = process.env.GOVERNATOR_MAJOR_URL
     GOVERNATOR_MINOR_URL = process.env.GOVERNATOR_MINOR_URL
     meshbluConfig = new MeshbluConfig().toJSON()
 
     @panic new Error('env variable ETCDCTL_PEERS is required') unless ETCDCTL_PEERS?
+    @panic new Error('env variable GOVERNATOR_MAJOR_URL is required') unless GOVERNATOR_MAJOR_URL?
     @panic new Error('env variable GOVERNATOR_MINOR_URL is required') unless GOVERNATOR_MINOR_URL?
     @panic new Error('env variable TRAVIS_PRO_URL is required') unless TRAVIS_PRO_URL?
     @panic new Error('env variable TRAVIS_ORG_URL is required') unless TRAVIS_ORG_URL?
@@ -29,6 +31,7 @@ class Command
     server = new Server {
       port
       ETCDCTL_PEERS
+      GOVERNATOR_MAJOR_URL
       GOVERNATOR_MINOR_URL
       TRAVIS_ORG_URL
       TRAVIS_ORG_TOKEN

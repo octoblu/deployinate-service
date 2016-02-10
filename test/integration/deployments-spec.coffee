@@ -8,7 +8,16 @@ describe 'POST /deployments', ->
     @meshbluServer = shmock()
     meshbluAddress = @meshbluServer.address()
 
+    @governatorMajor = shmock()
     @governatorMinor = shmock()
+
+    GOVERNATOR_MAJOR_URL = url.format
+      protocol: 'http'
+      hostname: 'localhost'
+      port: @governatorMajor.address().port
+      pathname: '/deployments'
+      auth: 'guv-uuid:guv-token'
+
     GOVERNATOR_MINOR_URL = url.format
       protocol: 'http'
       hostname: 'localhost'
@@ -35,6 +44,7 @@ describe 'POST /deployments', ->
 
     @sut = new Server {
       ETCDCTL_PEERS
+      GOVERNATOR_MAJOR_URL
       GOVERNATOR_MINOR_URL
       TRAVIS_ORG_URL
       TRAVIS_ORG_TOKEN
@@ -60,6 +70,9 @@ describe 'POST /deployments', ->
     @governatorMinor.close done
 
   afterEach (done) ->
+    @governatorMajor.close done
+
+  afterEach (done) ->
     @meshbluServer.close done
 
   beforeEach ->
@@ -69,17 +82,22 @@ describe 'POST /deployments', ->
     deployAuth = new Buffer('deploy-uuid:deploy-token').toString 'base64'
     guvAuth = new Buffer('guv-uuid:guv-token').toString 'base64'
 
-    @meshbluServer
+    @meshbluHandler = @meshbluServer
       .get '/v2/whoami'
       .set 'Authorization', "Basic #{deployAuth}"
       .reply 200, uuid: 'governator-uuid'
 
-    @travisOrg
+    @travisOrgHandler = @travisOrg
       .get '/repos/octoblu/some-service/builds'
       .set 'Authorization', 'token travis-org-token'
       .reply 200, [{branch: 'v1.0.2', result: 0}]
 
-    @governatorMinor
+    @majorHandler = @governatorMajor
+      .post '/deployments'
+      .set 'Authorization', "Basic #{guvAuth}"
+      .reply 201, [{branch: 'v1.0.2', result: 0}]
+
+    @minorHandler = @governatorMinor
       .post '/deployments'
       .set 'Authorization', "Basic #{guvAuth}"
       .reply 201, [{branch: 'v1.0.2', result: 0}]
@@ -100,3 +118,9 @@ describe 'POST /deployments', ->
 
   it 'should return a 201', ->
     expect(@response.statusCode).to.equal 201, JSON.stringify(@body)
+
+  it 'should call the handlers', ->
+    expect(@meshbluHandler.isDone).to.be.true
+    expect(@travisOrgHandler.isDone).to.be.true
+    expect(@majorHandler.isDone).to.be.true
+    expect(@minorHandler.isDone).to.be.true
