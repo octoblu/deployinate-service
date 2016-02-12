@@ -68,7 +68,7 @@ class DeploymentModel
     request.post options, (error, response) =>
       return callback error if error?
       unless response.statusCode == 201
-        error = new Error("Expected to get a 201, got an #{response.statusCode}")
+        error = new Error("Expected to get a 201, got an #{response.statusCode}. uri: #{uri}")
         error.code = response.code
         return callback error
       callback()
