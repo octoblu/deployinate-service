@@ -35,6 +35,6 @@ class TravisStatusModel
 
       debug 'found build', build
 
-      callback null, build.result == 0
+      callback null, (_.isNull(build.result) || build.result == 0)
 
 module.exports = TravisStatusModel
