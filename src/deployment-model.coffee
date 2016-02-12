@@ -62,7 +62,7 @@ class DeploymentModel
     options =
       uri: uri
       json:
-        etcdDir: @repository
+        etcdDir: "/#{@repository}"
         dockerUrl: "#{@docker_url}:#{@tag}"
 
     request.post options, (error, response) =>
