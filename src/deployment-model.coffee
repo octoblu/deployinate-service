@@ -2,6 +2,7 @@ _       = require 'lodash'
 async   = require 'async'
 {exec}  = require 'child_process'
 request = require 'request'
+url   = require 'url'
 EtcdManager = require './etcd-manager'
 DeployinateStatusModel = require './deployinate-status-model'
 TravisStatusModel = require './travis-status-model'
@@ -68,7 +69,10 @@ class DeploymentModel
     request.post options, (error, response) =>
       return callback error if error?
       unless response.statusCode == 201
-        error = new Error("Expected to get a 201, got an #{response.statusCode}. uri: #{uri}")
+        host = 'unknown'
+        try
+          {host} = url.parse(uri)
+        error = new Error("Expected to get a 201, got an #{response.statusCode}. host: #{host}")
         error.code = response.code
         return callback error
       callback()
