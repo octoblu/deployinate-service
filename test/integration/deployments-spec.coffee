@@ -24,7 +24,7 @@ describe 'POST /deployments', ->
       auth: 'guv-uuid:guv-token'
 
     @etcd = shmock()
-    ETCDCTL_PEERS = url.format protocol: 'http', hostname: 'localhost', port: @etcd.address().port
+    ETCD_MAJOR_URI = url.format protocol: 'http', hostname: 'localhost', port: @etcd.address().port
 
     @travisOrg = shmock()
     TRAVIS_ORG_URL = url.format protocol: 'http', hostname: 'localhost', port: @travisOrg.address().port
@@ -41,7 +41,8 @@ describe 'POST /deployments', ->
       uuid: 'deploy-uuid'
 
     @sut = new Server {
-      ETCDCTL_PEERS
+      ETCD_MAJOR_URI
+      ETCD_MINOR_URI: 'nothing'
       GOVERNATOR_MAJOR_URL
       GOVERNATOR_MINOR_URL
       TRAVIS_ORG_URL

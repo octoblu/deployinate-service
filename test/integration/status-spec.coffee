@@ -23,8 +23,10 @@ describe 'GET /status/foo/bar', ->
       port: @governatorMinor.address().port
       auth: 'guv-uuid:guv-token'
 
-    @etcd = shmock()
-    ETCDCTL_PEERS = url.format protocol: 'http', hostname: 'localhost', port: @etcd.address().port
+    @etcdMajor = shmock()
+    @etcdMinor = shmock()
+    ETCD_MAJOR_URI = url.format protocol: 'http', hostname: 'localhost', port: @etcdMajor.address().port
+    ETCD_MINOR_URI = url.format protocol: 'http', hostname: 'localhost', port: @etcdMinor.address().port
 
     meshbluConfig =
       protocol: 'http'
@@ -33,7 +35,8 @@ describe 'GET /status/foo/bar', ->
       uuid: 'deploy-uuid'
 
     @sut = new Server {
-      ETCDCTL_PEERS
+      ETCD_MAJOR_URI
+      ETCD_MINOR_URI
       GOVERNATOR_MAJOR_URL
       GOVERNATOR_MINOR_URL
       TRAVIS_ORG_URL: 'nothing'
@@ -48,7 +51,10 @@ describe 'GET /status/foo/bar', ->
     @sut.close done
 
   afterEach (done) ->
-    @etcd.close done
+    @etcdMajor.close done
+
+  afterEach (done) ->
+    @etcdMinor.close done
 
   afterEach (done) ->
     @governatorMinor.close done
@@ -94,13 +100,22 @@ describe 'GET /status/foo/bar', ->
           value: 'build successful: v1.0.0'
         ]
 
-    dockerUrlNode =
+    majorVersionNode =
       node:
         key: '/foo/bar/docker_url'
         dir: true
         nodes: [
           key: '/foo/bar/docker_url'
           value: 'quay.io/foo/bar:v0.9.9'
+        ]
+
+    minorVersionNode =
+      node:
+        key: '/foo/bar/docker_url'
+        dir: true
+        nodes: [
+          key: '/foo/bar/docker_url'
+          value: 'quay.io/foo/bar:v1.0.0'
         ]
 
     vulcandNode =
@@ -112,17 +127,21 @@ describe 'GET /status/foo/bar', ->
           value: '{"Id":"octoblu-foo-bar-development-1","URL":"http://172.17.8.101:32771"}'
         ]
 
-    @etcdStatusHandler = @etcd
+    @etcdMajorStatusHandler = @etcdMajor
       .get '/v2/keys/foo/bar/status'
       .reply 200, statusNode
 
-    @etcdVulcandHandler = @etcd
+    @etcdMajorVulcandHandler = @etcdMajor
       .get '/v2/keys/vulcand/backends/foo-bar/servers'
       .reply 200, vulcandNode
 
-    @etcdDockerUrlHandler = @etcd
+    @etcdMajorDockerUrlHandler = @etcdMajor
       .get '/v2/keys/foo/bar/docker_url'
-      .reply 200, dockerUrlNode
+      .reply 200, majorVersionNode
+
+    @etcdMinorDockerUrlHandler = @etcdMinor
+      .get '/v2/keys/foo/bar/docker_url'
+      .reply 200, minorVersionNode
 
   beforeEach (done) ->
     options =
@@ -140,6 +159,7 @@ describe 'GET /status/foo/bar', ->
   it 'should return a status', ->
     expectedResponse =
       majorVersion: 'quay.io/foo/bar:v0.9.9'
+      minorVersion: 'quay.io/foo/bar:v1.0.0'
       status:
         travis: 'build successful: v1.0.0'
       deployments:
@@ -154,7 +174,8 @@ describe 'GET /status/foo/bar', ->
 
   it 'should call the handlers', ->
     expect(@meshbluHandler.isDone).to.be.true
-    expect(@etcdStatusHandler.isDone).to.be.true
-    expect(@etcdVulcandHandler.isDone).to.be.true
-    expect(@etcdDockerUrlHandler.isDone).to.be.true
+    expect(@etcdMajorStatusHandler.isDone).to.be.true
+    expect(@etcdMajorVulcandHandler.isDone).to.be.true
+    expect(@etcdMajorDockerUrlHandler.isDone).to.be.true
+    expect(@etcdMinorDockerUrlHandler.isDone).to.be.true
     expect(@majorHandler.isDone).to.be.true

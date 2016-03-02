@@ -10,7 +10,8 @@ class Command
 
   run: =>
     port = process.env.PORT || 80
-    ETCDCTL_PEERS = process.env.ETCDCTL_PEERS ? 'http://localhost:2379'
+    ETCD_MAJOR_URI = process.env.ETCD_MAJOR_URI
+    ETCD_MINOR_URI = process.env.ETCD_MINOR_URI
     TRAVIS_PRO_URL = 'https://api.travis-ci.com'
     TRAVIS_ORG_URL = 'https://api.travis-ci.org'
     TRAVIS_PRO_TOKEN = process.env.TRAVIS_PRO_TOKEN
@@ -19,7 +20,8 @@ class Command
     GOVERNATOR_MINOR_URL = process.env.GOVERNATOR_MINOR_URL
     meshbluConfig = new MeshbluConfig().toJSON()
 
-    @panic new Error('env variable ETCDCTL_PEERS is required') unless ETCDCTL_PEERS?
+    @panic new Error('env variable ETCD_MAJOR_URI is required') unless ETCD_MAJOR_URI?
+    @panic new Error('env variable ETCD_MINOR_URI is required') unless ETCD_MINOR_URI?
     @panic new Error('env variable GOVERNATOR_MAJOR_URL is required') unless GOVERNATOR_MAJOR_URL?
     @panic new Error('env variable GOVERNATOR_MINOR_URL is required') unless GOVERNATOR_MINOR_URL?
     @panic new Error('env variable TRAVIS_PRO_URL is required') unless TRAVIS_PRO_URL?
