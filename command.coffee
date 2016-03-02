@@ -32,7 +32,8 @@ class Command
 
     server = new Server {
       port
-      ETCDCTL_PEERS
+      ETCD_MAJOR_URI
+      ETCD_MINOR_URI
       GOVERNATOR_MAJOR_URL
       GOVERNATOR_MINOR_URL
       TRAVIS_ORG_URL
