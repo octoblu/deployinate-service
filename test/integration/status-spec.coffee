@@ -3,7 +3,7 @@ shmock  = require 'shmock'
 url     = require 'url'
 Server = require '../../src/server'
 
-describe 'POST /deployments', ->
+describe 'GET /status/foo/bar', ->
   beforeEach (done) ->
     @meshbluServer = shmock()
     meshbluAddress = @meshbluServer.address()
@@ -26,14 +26,6 @@ describe 'POST /deployments', ->
     @etcd = shmock()
     ETCDCTL_PEERS = url.format protocol: 'http', hostname: 'localhost', port: @etcd.address().port
 
-    @travisOrg = shmock()
-    TRAVIS_ORG_URL = url.format protocol: 'http', hostname: 'localhost', port: @travisOrg.address().port
-    TRAVIS_ORG_TOKEN = 'travis-org-token'
-
-    @travisPro = shmock()
-    TRAVIS_PRO_URL = url.format protocol: 'http', hostname: 'localhost', port: @travisPro.address().port
-    TRAVIS_PRO_TOKEN = 'travis-pro-token'
-
     meshbluConfig =
       protocol: 'http'
       server: 'localhost'
@@ -44,22 +36,16 @@ describe 'POST /deployments', ->
       ETCDCTL_PEERS
       GOVERNATOR_MAJOR_URL
       GOVERNATOR_MINOR_URL
-      TRAVIS_ORG_URL
-      TRAVIS_ORG_TOKEN
-      TRAVIS_PRO_URL
-      TRAVIS_PRO_TOKEN
+      TRAVIS_ORG_URL: 'nothing'
+      TRAVIS_ORG_TOKEN: 'nothing'
+      TRAVIS_PRO_URL: 'nothing'
+      TRAVIS_PRO_TOKEN: 'nothing'
       meshbluConfig
     }
     @sut.run done
 
   afterEach (done) ->
     @sut.close done
-
-  afterEach (done) ->
-    @travisPro.close done
-
-  afterEach (done) ->
-    @travisOrg.close done
 
   afterEach (done) ->
     @etcd.close done
@@ -85,40 +71,67 @@ describe 'POST /deployments', ->
       .set 'Authorization', "Basic #{deployAuth}"
       .reply 200, uuid: 'governator-uuid'
 
-    @travisOrgHandler = @travisOrg
-      .get '/repos/octoblu/some-service/builds'
-      .set 'Authorization', 'token travis-org-token'
+    @majorHandler = @governatorMajor
+      .get '/status/foo/bar'
+      .set 'Authorization', "Basic #{guvAuth}"
       .reply 200, [{branch: 'v1.0.2', result: 0}]
 
-    @majorHandler = @governatorMajor
-      .post '/deployments'
-      .set 'Authorization', "Basic #{guvAuth}"
-      .reply 201, [{branch: 'v1.0.2', result: 0}]
-
     @minorHandler = @governatorMinor
-      .post '/deployments'
+      .get '/status/foo/bar'
       .set 'Authorization', "Basic #{guvAuth}"
-      .reply 201, [{branch: 'v1.0.2', result: 0}]
+      .reply 200, [{branch: 'v1.0.2', result: 0}]
+
+    statusNode =
+      node:
+        key: '/foo/bar/status'
+        dir: true
+        nodes: [
+          key: '/foo/bar/status/travis'
+          value: 'build successful: v1.0.0'
+        ]
+
+    envNode =
+      node:
+        key: '/foo/bar/env'
+        dir: true
+        nodes: [
+          key: '/foo/bar/env/VAR'
+          value: 'VALUE'
+        ]
+
+    @etcdStatusHandler = @etcd
+      .get '/v2/keys/foo/bar/status'
+      .reply 200, statusNode
+
+    @etcdEnvHandler = @etcd
+      .get '/v2/keys/foo/bar/env'
+      .reply 200, envNode
 
   beforeEach (done) ->
     options =
-      uri: '/deployments'
+      uri: '/status/foo/bar'
       baseUrl: @baseUrl
       auth: {username: 'deploy-uuid', password: 'deploy-token'}
-      json:
-        repository: 'octoblu/some-service'
-        docker_url: 'quay.io/octoblu/some-service'
-        updated_tags: ['v1.0.2']
 
-    request.post options, (error, @response, @body) =>
+    request.get options, (error, @response, @body) =>
       return done error if error?
       done()
 
-  it 'should return a 201', ->
-    expect(@response.statusCode).to.equal 201, JSON.stringify(@body)
+  it 'should return a 200', ->
+    expect(@response.statusCode).to.equal 200, JSON.stringify(@body)
+
+  it 'should return a status', ->
+    expectedResponse =
+      status:
+        travis: 'build successful: v1.0.0'
+      env:
+        VAR: 'VALUE'
+
+    expect(JSON.parse @response.body).to.deep.equal expectedResponse
 
   it 'should call the handlers', ->
     expect(@meshbluHandler.isDone).to.be.true
-    expect(@travisOrgHandler.isDone).to.be.true
+    expect(@etcdStatusHandler.isDone).to.be.true
+    expect(@etcdEnvHandler.isDone).to.be.true
     expect(@majorHandler.isDone).to.be.true
     expect(@minorHandler.isDone).to.be.true

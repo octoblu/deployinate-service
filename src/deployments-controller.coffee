@@ -8,13 +8,11 @@ class DeploymentsController
     {@TRAVIS_ORG_URL, @TRAVIS_ORG_TOKEN, @TRAVIS_PRO_URL, @TRAVIS_PRO_TOKEN} = options
 
     @DeploymentModel = dependencies.DeploymentModel || require './deployment-model'
-    @DeployinateStatusModel = dependencies.DeployinateStatusModel || require './deployinate-status-model'
-    @DeployinateRollbackModel = dependencies.DeployinateRollbackModel || require './deployinate-rollback-model'
 
   create: (req, res) =>
     {repository, updated_tags, docker_url} = req.body
     tag = _.first updated_tags
-    @deployinateModel = new @DeploymentModel {
+    @deployment = new @DeploymentModel {
       repository
       docker_url
       tag
@@ -26,8 +24,8 @@ class DeploymentsController
       @TRAVIS_PRO_TOKEN
       @TRAVIS_ORG_TOKEN
     }
-    @deployinateModel.create (error) ->
-      return res.status(422).send(error: error.message) if error?
+    @deployment.create (error) ->
+      return res.status(error.code ? 500).send(error: error.message) if error?
       return res.status(201).end()
 
 module.exports = DeploymentsController

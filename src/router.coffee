@@ -1,4 +1,4 @@
-DeployinateController = require './deployinate-controller'
+StatusController = require './status-controller'
 DeploymentsController = require './deployments-controller'
 
 class Router
@@ -7,14 +7,6 @@ class Router
     {GOVERNATOR_MAJOR_URL, GOVERNATOR_MINOR_URL} = options
     {TRAVIS_ORG_URL, TRAVIS_ORG_TOKEN} = options
     {TRAVIS_PRO_URL, TRAVIS_PRO_TOKEN} = options
-
-    @deployinateController = new DeployinateController {
-      ETCDCTL_PEERS
-      TRAVIS_ORG_URL
-      TRAVIS_ORG_TOKEN
-      TRAVIS_PRO_URL
-      TRAVIS_PRO_TOKEN
-    }
 
     @deploymentsController = new DeploymentsController {
       GOVERNATOR_MAJOR_URL
@@ -26,11 +18,14 @@ class Router
       TRAVIS_PRO_TOKEN
     }
 
+    @statusController = new StatusController {
+      GOVERNATOR_MAJOR_URL
+      GOVERNATOR_MINOR_URL
+      ETCDCTL_PEERS
+    }
+
   route: (app) =>
     app.post '/deployments', @deploymentsController.create
-    app.post '/deploy', @deployinateController.deploy
-    app.post '/workers/deploy', @deployinateController.deployWorker
-    app.post '/rollback/:namespace/:service', @deployinateController.rollback
-    app.get '/status/:namespace/:service', @deployinateController.getStatus
+    app.get '/status/:namespace/:service', @statusController.show
 
 module.exports = Router

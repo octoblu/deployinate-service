@@ -10,7 +10,4 @@ COPY package.json /usr/src/app/
 RUN npm -s install --production
 COPY . /usr/src/app/
 
-RUN curl --silent -L https://cdn.octoblu.com/fleet/fleet-linux-amd64.tar.gz | tar -xz -C /opt/
-ENV PATH $PATH:/opt/fleet-linux-amd64
-
 CMD [ "node", "command.js" ]

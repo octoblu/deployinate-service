@@ -4,7 +4,6 @@ async   = require 'async'
 request = require 'request'
 url   = require 'url'
 EtcdManager = require './etcd-manager'
-DeployinateStatusModel = require './deployinate-status-model'
 TravisStatusModel = require './travis-status-model'
 debug   = require('debug')('deployinate-service:deployinate-model')
 
@@ -15,21 +14,42 @@ class DeploymentModel
     {@GOVERNATOR_MAJOR_URL, @GOVERNATOR_MINOR_URL} = options
     {@TRAVIS_PRO_URL,@TRAVIS_ORG_URL} = options
     {@TRAVIS_PRO_TOKEN,@TRAVIS_ORG_TOKEN} = options
+    throw new Error('repository is required') unless @repository?
+    throw new Error('docker_url is required') unless @docker_url?
+    throw new Error('tag is required') unless @tag?
+    throw new Error('ETCDCTL_PEERS is required') unless @ETCDCTL_PEERS?
+    throw new Error('GOVERNATOR_MAJOR_URL is required') unless @GOVERNATOR_MAJOR_URL?
+    throw new Error('GOVERNATOR_MINOR_URL is required') unless @GOVERNATOR_MINOR_URL?
+    throw new Error('TRAVIS_PRO_URL is required') unless @TRAVIS_PRO_URL?
+    throw new Error('TRAVIS_PRO_TOKEN is required') unless @TRAVIS_PRO_TOKEN?
+    throw new Error('TRAVIS_ORG_URL is required') unless @TRAVIS_ORG_URL?
+    throw new Error('TRAVIS_ORG_TOKEN is required') unless @TRAVIS_ORG_TOKEN?
     @repositoryDasherized = @repository?.replace '/', '-'
 
+  _unprocessableError: (message) =>
+    error = new Error message
+    error.code = 422
+    return error
+
+  _preconditionError: (message) =>
+    error = new Error message
+    error.code = 412
+    return error
+
   create: (callback) =>
-    return callback new Error("invalid repository: #{@repository}") unless @repository?
-    return callback new Error("invalid docker_url: #{@docker_url}") unless @docker_url?
-    return callback new Error("invalid tag: #{@tag}") unless @tag?
+    return callback @_unprocessableError("invalid repository: #{@repository}") unless @repository?
+    return callback @_unprocessableError("invalid docker_url: #{@docker_url}") unless @docker_url?
+    return callback @_unprocessableError("invalid tag: #{@tag}") unless @tag?
 
     @_getTravisBuildStatus (error, passed) =>
       return callback error if error?
       unless passed
-        @_setKey "#{@repository}/current_step", 'travis status failed'
-        callback new Error "travis status failed"
+        @_setKey "#{@repository}/status/travis", "build failed: #{@tag}"
+        callback @_preconditionError "travis build failed: #{@tag}"
         return
 
       async.series [
+        async.apply @_setKey, "#{@repository}/status/travis", "build successful: #{@tag}"
         @_postGovernatorMajor
         @_postGovernatorMinor
       ], callback
@@ -44,7 +64,7 @@ class DeploymentModel
       @TRAVIS_ORG_TOKEN
     }
 
-    @_setKey "#{@repository}/current_step", 'checking travis status', =>
+    @_setKey "#{@repository}/status/travis", "checking: #{@tag}", =>
       travisStatus.getStatus callback
 
   _setKey: (key, value, callback=->) =>
@@ -61,7 +81,8 @@ class DeploymentModel
 
   _postGovernator: ({uri}, callback) =>
     options =
-      uri: uri
+      uri: '/deployments'
+      baseUrl: uri
       json:
         etcdDir: "/#{@repository}"
         dockerUrl: "#{@docker_url}:#{@tag}"
