@@ -21,7 +21,7 @@ class StatusModel
 
   get: (callback) =>
     async.parallel {
-      docker_url: @_getDockerUrl
+      majorVersion: @_getMajorVersion
       status: @_getStatus
       deployments: @_getGovernatorMajor
       servers: @_getVulcandBackend
@@ -30,7 +30,7 @@ class StatusModel
   _getStatus: (callback) =>
     @_getEtcd "/#{@repository}/status", callback
 
-  _getDockerUrl: (callback) =>
+  _getMajorVersion: (callback) =>
     @_getEtcd "/#{@repository}/docker_url", (error, data) =>
       return callback error if error?
       callback null, _.first _.values data
@@ -75,7 +75,7 @@ class StatusModel
       unless response.statusCode == 200
         host = 'unknown'
         try
-          {host} = url.parse(uri)
+          {host} = url.parse(@GOVERNATOR_MAJOR_URL)
         error = new Error("Expected to get a 200, got an #{response.statusCode}. host: #{host}")
         error.code = response.code
         return callback error

@@ -139,7 +139,7 @@ describe 'GET /status/foo/bar', ->
 
   it 'should return a status', ->
     expectedResponse =
-      docker_url: 'quay.io/foo/bar:v0.9.9'
+      majorVersion: 'quay.io/foo/bar:v0.9.9'
       status:
         travis: 'build successful: v1.0.0'
       deployments:
