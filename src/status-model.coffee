@@ -20,92 +20,48 @@ class StatusModel
     @etcd = etcdManager.getEtcd()
 
   get: (callback) =>
-    async.parallel [
-      @_getStatus
-      @_getEnv
-      @_getGovernatorMinor
-      @_getGovernatorMajor
-    ], (error, results) =>
-      return callback error if error?
-      [status, env] = results
-
-      data =
-        status: status
-        env: env
-        # minor: minorStatus
-        # major: majorStatus
-
-      callback null, data
+    async.parallel {
+      status: @_getStatus
+      deployments: @_getGovernatorMajor
+      servers: @_getVulcandBackend
+    }, callback
 
   _getStatus: (callback) =>
     @_getEtcd "/#{@repository}/status", callback
 
-  _getEnv: (callback) =>
-    @_getEtcd "/#{@repository}/env", callback
-
   _getEtcd: (key, callback) =>
     debug 'getEtcd', key
     @etcd.get key, recursive: true, (error, keys) =>
+      return callback null, {} if error?.errorCode == 100
       return callback error if error?
       return callback new Error(keys) unless _.isPlainObject(keys)
 
       @etcdParser = new EtcdParserModel key, keys
+      @etcdParser.parse callback
+
+  _getVulcandBackend: (callback) =>
+    debug 'getVulcandBackend', @repository
+    service = @repository.replace('/', '-')
+    key = "/vulcand/backends/#{service}/servers"
+    @etcd.get key, recursive: true, (error, keys) =>
+      return callback null, {error: error.message} if error?
+      return callback null, {error: keys} unless _.isPlainObject(keys)
+
+      @etcdParser = new EtcdParserModel key, keys
+      servers = {}
       @etcdParser.parse (error, data) =>
-        callback error, data
+        return callback error if error?
 
-  # getVulcandFrontend: (callback) =>
-  #   debug 'getVulcandFrontend', @repository
-  #   service = @repository.replace('/', '-')
-  #   key = "/vulcand/frontends/#{service}"
-  #   @etcd.get key, recursive: true, (error, keys) =>
-  #     return callback null, {error: error.message} if error?
-  #     return callback null, {error: keys} unless _.isPlainObject(keys)
-  #
-  #     @etcdParser = new EtcdParserModel key, keys
-  #     @etcdParser.parse (error, data) =>
-  #       return callback error if error?
-  #
-  #       try
-  #         data = JSON.parse(data?.frontend)
-  #       catch
-  #
-  #       callback null, data
-  #
-  # getVulcandBackendBlue: (callback) =>
-  #   @getVulcandBackend 'blue', callback
-  #
-  # getVulcandBackendGreen: (callback) =>
-  #   @getVulcandBackend 'green', callback
-  #
-  # getVulcandBackend: (color, callback) =>
-  #   debug 'getVulcandBackend', color, @repository
-  #   service = @repository.replace('/', '-')
-  #   key = "/vulcand/backends/#{service}-#{color}"
-  #   @etcd.get key, recursive: true, (error, keys) =>
-  #     return callback null, {error: error.message} if error?
-  #     return callback null, {error: keys} unless _.isPlainObject(keys)
-  #
-  #     @etcdParser = new EtcdParserModel key, keys
-  #     @etcdParser.parse (error, data) =>
-  #       return callback error if error?
-  #
-  #       _.each _.keys(data), (key) =>
-  #         try
-  #           data[key] = JSON.parse data[key]
-  #         catch
-  #
-  #       callback null, data
+        _.each _.keys(data), (key) =>
+          node = JSON.parse data[key]
+          servers[node.Id] = node.URL
 
-  _getGovernatorMinor: (callback) =>
-    @_getGovernator uri: @GOVERNATOR_MINOR_URL, callback
+        callback null, servers
 
   _getGovernatorMajor: (callback) =>
-    @_getGovernator uri: @GOVERNATOR_MAJOR_URL, callback
-
-  _getGovernator: ({uri}, callback) =>
     options =
-      uri: "/status/#{@repository}"
-      baseUrl: uri
+      uri: "/status"
+      baseUrl: @GOVERNATOR_MAJOR_URL
       json: true
 
     request.get options, (error, response) =>
@@ -117,6 +73,10 @@ class StatusModel
         error = new Error("Expected to get a 200, got an #{response.statusCode}. host: #{host}")
         error.code = response.code
         return callback error
-      callback null, response.body
+
+      deploys = _.pick response.body, (value, key) =>
+        _.startsWith key, "governator:/#{@repository}:"
+
+      callback null, deploys
 
 module.exports = StatusModel

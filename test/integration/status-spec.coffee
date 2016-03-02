@@ -72,14 +72,18 @@ describe 'GET /status/foo/bar', ->
       .reply 200, uuid: 'governator-uuid'
 
     @majorHandler = @governatorMajor
-      .get '/status/foo/bar'
+      .get '/status'
       .set 'Authorization', "Basic #{guvAuth}"
-      .reply 200, [{branch: 'v1.0.2', result: 0}]
-
-    @minorHandler = @governatorMinor
-      .get '/status/foo/bar'
-      .set 'Authorization', "Basic #{guvAuth}"
-      .reply 200, [{branch: 'v1.0.2', result: 0}]
+      .reply 200, {
+        'governator:/foo/bar:quay.io/foo/bar:v1.0.0':
+          key: 'governator:/foo/bar:quay.io/foo/bar:v1.0.0'
+          deployAt: 2005059595
+          status: 'pending'
+        'governator:/baz/awefaw:quay.io/foo/bar:v1.0.0':
+          key: 'governator:/baz/awefaw:quay.io/foo/bar:v1.0.0'
+          deployAt: 2005059595
+          status: 'pending'
+      }
 
     statusNode =
       node:
@@ -90,22 +94,22 @@ describe 'GET /status/foo/bar', ->
           value: 'build successful: v1.0.0'
         ]
 
-    envNode =
+    vulcandNode =
       node:
-        key: '/foo/bar/env'
+        key: '/vulcand/backends/foo-bar/servers'
         dir: true
         nodes: [
-          key: '/foo/bar/env/VAR'
-          value: 'VALUE'
+          key: '/vulcand/backends/foo-bar/servers'
+          value: '{"Id":"octoblu-foo-bar-development-1","URL":"http://172.17.8.101:32771"}'
         ]
 
     @etcdStatusHandler = @etcd
       .get '/v2/keys/foo/bar/status'
       .reply 200, statusNode
 
-    @etcdEnvHandler = @etcd
-      .get '/v2/keys/foo/bar/env'
-      .reply 200, envNode
+    @etcdVulcandHandler = @etcd
+      .get '/v2/keys/vulcand/backends/foo-bar/servers'
+      .reply 200, vulcandNode
 
   beforeEach (done) ->
     options =
@@ -124,14 +128,18 @@ describe 'GET /status/foo/bar', ->
     expectedResponse =
       status:
         travis: 'build successful: v1.0.0'
-      env:
-        VAR: 'VALUE'
+      deployments:
+        "governator:/foo/bar:quay.io/foo/bar:v1.0.0":
+          deployAt: 2005059595
+          key: "governator:/foo/bar:quay.io/foo/bar:v1.0.0"
+          status: "pending"
+      servers:
+        'octoblu-foo-bar-development-1': 'http://172.17.8.101:32771'
 
     expect(JSON.parse @response.body).to.deep.equal expectedResponse
 
   it 'should call the handlers', ->
     expect(@meshbluHandler.isDone).to.be.true
     expect(@etcdStatusHandler.isDone).to.be.true
-    expect(@etcdEnvHandler.isDone).to.be.true
+    expect(@etcdVulcandHandler.isDone).to.be.true
     expect(@majorHandler.isDone).to.be.true
-    expect(@minorHandler.isDone).to.be.true

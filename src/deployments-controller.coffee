@@ -25,7 +25,7 @@ class DeploymentsController
       @TRAVIS_ORG_TOKEN
     }
     @deployment.create (error) ->
-      return res.status(error.code ? 500).send(error: error.message) if error?
+      return res.status(error.code ? 500).send(error.message) if error?
       return res.status(201).end()
 
 module.exports = DeploymentsController

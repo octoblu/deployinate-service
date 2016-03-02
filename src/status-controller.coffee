@@ -15,7 +15,7 @@ class StatusController
       @GOVERNATOR_MAJOR_URL
       @GOVERNATOR_MINOR_URL
     }
-    status.get (error, statusInfo) ->
+    status.get (error, statusInfo) =>
       return res.status(error.code ? 500).send(error: error.message) if error?
       return res.status(200).send statusInfo
 
