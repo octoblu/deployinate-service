@@ -94,6 +94,15 @@ describe 'GET /status/foo/bar', ->
           value: 'build successful: v1.0.0'
         ]
 
+    dockerUrlNode =
+      node:
+        key: '/foo/bar/docker_url'
+        dir: true
+        nodes: [
+          key: '/foo/bar/docker_url'
+          value: 'quay.io/foo/bar:v0.9.9'
+        ]
+
     vulcandNode =
       node:
         key: '/vulcand/backends/foo-bar/servers'
@@ -111,6 +120,10 @@ describe 'GET /status/foo/bar', ->
       .get '/v2/keys/vulcand/backends/foo-bar/servers'
       .reply 200, vulcandNode
 
+    @etcdDockerUrlHandler = @etcd
+      .get '/v2/keys/foo/bar/docker_url'
+      .reply 200, dockerUrlNode
+
   beforeEach (done) ->
     options =
       uri: '/status/foo/bar'
@@ -126,6 +139,7 @@ describe 'GET /status/foo/bar', ->
 
   it 'should return a status', ->
     expectedResponse =
+      docker_url: 'quay.io/foo/bar:v0.9.9'
       status:
         travis: 'build successful: v1.0.0'
       deployments:
@@ -142,4 +156,5 @@ describe 'GET /status/foo/bar', ->
     expect(@meshbluHandler.isDone).to.be.true
     expect(@etcdStatusHandler.isDone).to.be.true
     expect(@etcdVulcandHandler.isDone).to.be.true
+    expect(@etcdDockerUrlHandler.isDone).to.be.true
     expect(@majorHandler.isDone).to.be.true

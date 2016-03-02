@@ -21,6 +21,7 @@ class StatusModel
 
   get: (callback) =>
     async.parallel {
+      docker_url: @_getDockerUrl
       status: @_getStatus
       deployments: @_getGovernatorMajor
       servers: @_getVulcandBackend
@@ -28,6 +29,11 @@ class StatusModel
 
   _getStatus: (callback) =>
     @_getEtcd "/#{@repository}/status", callback
+
+  _getDockerUrl: (callback) =>
+    @_getEtcd "/#{@repository}/docker_url", (error, data) =>
+      return callback error if error?
+      callback null, _.first _.values data
 
   _getEtcd: (key, callback) =>
     debug 'getEtcd', key
