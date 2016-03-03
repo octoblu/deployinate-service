@@ -48,5 +48,15 @@ class Command
       {address, port} = server.address()
       console.log "Server running on #{address}:#{port}"
 
+    process.on 'SIGTERM', =>
+      console.log 'SIGTERM caught, exiting'
+      server.stop =>
+        process.exit 0
+
+      setTimeout =>
+        console.log 'Server did not stop in time, exiting 0 manually'
+        process.exit 0
+      , 5000
+
 command = new Command()
 command.run()
