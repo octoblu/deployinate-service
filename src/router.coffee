@@ -1,4 +1,5 @@
 StatusController = require './status-controller'
+SchedulesController = require './schedules-controller'
 DeploymentsController = require './deployments-controller'
 
 class Router
@@ -30,9 +31,13 @@ class Router
       ETCD_MINOR_URI
     }
 
+    @schedulesController = new SchedulesController {
+      GOVERNATOR_MAJOR_URL
+    }
+
   route: (app) =>
     app.post '/deployments', @deploymentsController.create
     app.get '/status/:namespace/:service', @statusController.show
-    # app.patch '/schedule/:docker_url', @scheduleController.update
+    app.post '/schedules', @schedulesController.create
 
 module.exports = Router

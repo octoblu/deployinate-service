@@ -57,9 +57,10 @@ describe 'POST /schedules', ->
       .reply 200, uuid: 'governator-uuid'
 
     @majorHandler = @governatorMajor
-      .patch '/schedule/foo/bar:v1.0.2'
+      .post '/schedules'
       .set 'Authorization', "Basic #{guvAuth}"
-      .reply 201, [{branch: 'v1.0.2', result: 0}]
+      .send {etcdDir: '/octoblu/some-service', dockerUrl: 'quay.io/octoblu/some-service:v1.0.2', deployAt: 151235995}
+      .reply 201, {}
 
   beforeEach (done) ->
     options =
@@ -67,16 +68,16 @@ describe 'POST /schedules', ->
       baseUrl: @baseUrl
       auth: {username: 'deploy-uuid', password: 'deploy-token'}
       json:
-        etcd_key: '/octoblu/some-service'
-        docker_url: 'quay.io/octoblu/some-service:v1.0.2'
-        deploy_at: Date.now()
+        etcdDir: '/octoblu/some-service'
+        dockerUrl: 'quay.io/octoblu/some-service:v1.0.2'
+        deployAt: 151235995
 
     request.post options, (error, @response, @body) =>
       return done error if error?
       done()
 
-  it 'should return a 204', ->
-    expect(@response.statusCode).to.equal 204, JSON.stringify(@body)
+  it 'should return a 201', ->
+    expect(@response.statusCode).to.equal 201, JSON.stringify(@body)
 
   it 'should call the handlers', ->
     expect(@meshbluHandler.isDone).to.be.true
