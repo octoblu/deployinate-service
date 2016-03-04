@@ -8,11 +8,18 @@ class Router
     {ETCD_MAJOR_URI, ETCD_MINOR_URI} = options
     {TRAVIS_ORG_URL, TRAVIS_ORG_TOKEN} = options
     {TRAVIS_PRO_URL, TRAVIS_PRO_TOKEN} = options
+    {QUAY_URL, QUAY_TOKEN} = options
 
     throw new Error('ETCD_MAJOR_URI is required') unless ETCD_MAJOR_URI?
     throw new Error('ETCD_MINOR_URI is required') unless ETCD_MINOR_URI?
     throw new Error('GOVERNATOR_MAJOR_URL is required') unless GOVERNATOR_MAJOR_URL?
     throw new Error('GOVERNATOR_MINOR_URL is required') unless GOVERNATOR_MINOR_URL?
+    throw new Error('TRAVIS_ORG_URL is required') unless TRAVIS_ORG_URL?
+    throw new Error('TRAVIS_ORG_TOKEN is required') unless TRAVIS_ORG_TOKEN?
+    throw new Error('TRAVIS_PRO_URL is required') unless TRAVIS_PRO_URL?
+    throw new Error('TRAVIS_PRO_TOKEN is required') unless TRAVIS_PRO_TOKEN?
+    throw new Error('QUAY_URL is required') unless QUAY_URL?
+    throw new Error('QUAY_TOKEN is required') unless QUAY_TOKEN?
 
     @deploymentsController = new DeploymentsController {
       GOVERNATOR_MAJOR_URL
@@ -29,6 +36,8 @@ class Router
       GOVERNATOR_MINOR_URL
       ETCD_MAJOR_URI
       ETCD_MINOR_URI
+      QUAY_URL
+      QUAY_TOKEN
     }
 
     @schedulesController = new SchedulesController {

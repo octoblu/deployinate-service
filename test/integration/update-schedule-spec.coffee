@@ -31,6 +31,8 @@ describe 'POST /schedules', ->
       TRAVIS_ORG_TOKEN: 'nothing'
       TRAVIS_PRO_URL: 'nothing'
       TRAVIS_PRO_TOKEN: 'nothing'
+      QUAY_URL: 'nothing'
+      QUAY_TOKEN: 'nothing'
       meshbluConfig
     }
     @sut.run done

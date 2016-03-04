@@ -11,11 +11,14 @@ class StatusModel
     {@repository} = options
     {@GOVERNATOR_MAJOR_URL, @GOVERNATOR_MINOR_URL} = options
     {@ETCD_MAJOR_URI, @ETCD_MINOR_URI} = options
+    {@QUAY_URL, @QUAY_TOKEN} = options
     throw new Error('repository is required') unless @repository?
     throw new Error('ETCD_MAJOR_URI is required') unless @ETCD_MAJOR_URI?
     throw new Error('ETCD_MINOR_URI is required') unless @ETCD_MINOR_URI?
     throw new Error('GOVERNATOR_MAJOR_URL is required') unless @GOVERNATOR_MAJOR_URL?
     throw new Error('GOVERNATOR_MINOR_URL is required') unless @GOVERNATOR_MINOR_URL?
+    throw new Error('QUAY_URL is required') unless @QUAY_URL?
+    throw new Error('QUAY_TOKEN is required') unless @QUAY_TOKEN?
 
   get: (callback) =>
     async.parallel {
@@ -24,10 +27,35 @@ class StatusModel
       status: @_getStatus
       deployments: @_getGovernatorMajor
       servers: @_getVulcandBackend
+      quay: @_getQuayStatus
     }, callback
 
   _getStatus: (callback) =>
     @_getEtcd @ETCD_MAJOR_URI, "/#{@repository}/status", callback
+
+  _getQuayStatus: (callback) =>
+    options =
+      uri: "/api/v1/repository/#{@repository}/build/"
+      baseUrl: @QUAY_URL
+      json: true
+      headers:
+        Authorization: "token #{@QUAY_TOKEN}"
+
+    request.get options, (error, response) =>
+      return callback error if error?
+      unless response.statusCode == 200
+        error = new Error("Expected to get a 200, got an #{response.statusCode}. host: #{@QUAY_URL}")
+        error.code = response.code
+        return callback error
+      return callback null, {} if _.isEmpty response.body?.builds
+
+      quayBuild = _.first response.body.builds
+      build =
+        tag: _.first quayBuild.tags
+        phase: quayBuild.phase
+        startedAt: quayBuild.started
+
+      callback null, build
 
   _getMajorVersion: (callback) =>
     @_getEtcd @ETCD_MAJOR_URI, "/#{@repository}/docker_url", (error, data) =>

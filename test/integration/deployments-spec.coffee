@@ -49,6 +49,8 @@ describe 'POST /deployments', ->
       TRAVIS_ORG_TOKEN
       TRAVIS_PRO_URL
       TRAVIS_PRO_TOKEN
+      QUAY_URL: 'nothing'
+      QUAY_TOKEN: 'nothing'
       meshbluConfig
     }
     @sut.run done

@@ -15,6 +15,7 @@ class Server
     {@ETCD_MAJOR_URI, @ETCD_MINOR_URI} = options
     {@TRAVIS_ORG_TOKEN, @TRAVIS_ORG_URL} = options
     {@TRAVIS_PRO_URL, @TRAVIS_PRO_TOKEN} = options
+    {@QUAY_URL, @QUAY_TOKEN} = options
     throw new Error('ETCD_MAJOR_URI is required') unless @ETCD_MAJOR_URI?
     throw new Error('ETCD_MINOR_URI is required') unless @ETCD_MINOR_URI?
     throw new Error('GOVERNATOR_MAJOR_URL is required') unless @GOVERNATOR_MAJOR_URL?
@@ -23,6 +24,8 @@ class Server
     throw new Error('TRAVIS_ORG_URL is required') unless @TRAVIS_ORG_URL?
     throw new Error('TRAVIS_PRO_TOKEN is required') unless @TRAVIS_PRO_TOKEN?
     throw new Error('TRAVIS_ORG_TOKEN is required') unless @TRAVIS_ORG_TOKEN?
+    throw new Error('QUAY_URL is required') unless @QUAY_URL?
+    throw new Error('QUAY_TOKEN is required') unless @QUAY_TOKEN?
     throw new Error('UUID must be provided from meshbluConfig') unless @meshbluConfig?.uuid?
 
   address: =>
@@ -49,6 +52,8 @@ class Server
       @TRAVIS_ORG_URL
       @TRAVIS_PRO_TOKEN
       @TRAVIS_ORG_TOKEN
+      @QUAY_URL
+      @QUAY_TOKEN
     }
     router.route app
 

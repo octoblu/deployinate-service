@@ -28,6 +28,12 @@ describe 'GET /status/foo/bar', ->
     ETCD_MAJOR_URI = url.format protocol: 'http', hostname: 'localhost', port: @etcdMajor.address().port
     ETCD_MINOR_URI = url.format protocol: 'http', hostname: 'localhost', port: @etcdMinor.address().port
 
+    @quay = shmock()
+    QUAY_URL = url.format
+      protocol: 'http'
+      hostname: 'localhost'
+      port: @quay.address().port
+
     meshbluConfig =
       protocol: 'http'
       server: 'localhost'
@@ -43,12 +49,17 @@ describe 'GET /status/foo/bar', ->
       TRAVIS_ORG_TOKEN: 'nothing'
       TRAVIS_PRO_URL: 'nothing'
       TRAVIS_PRO_TOKEN: 'nothing'
+      QUAY_URL: QUAY_URL
+      QUAY_TOKEN: 'quay-token'
       meshbluConfig
     }
     @sut.run done
 
   afterEach (done) ->
     @sut.close done
+
+  afterEach (done) ->
+    @quay.close done
 
   afterEach (done) ->
     @etcdMajor.close done
@@ -143,6 +154,11 @@ describe 'GET /status/foo/bar', ->
       .get '/v2/keys/foo/bar/docker_url'
       .reply 200, minorVersionNode
 
+    @quayHandler = @quay
+      .get '/api/v1/repository/foo/bar/build/'
+      .set 'Authorization', "token quay-token"
+      .reply 200, builds: [{tags: ['v1.0.0'], phase: 'building', started: 'blah blah'}]
+
   beforeEach (done) ->
     options =
       uri: '/status/foo/bar'
@@ -169,6 +185,10 @@ describe 'GET /status/foo/bar', ->
           status: "pending"
       servers:
         'octoblu-foo-bar-development-1': 'http://172.17.8.101:32771'
+      quay:
+        tag: 'v1.0.0'
+        phase: 'building'
+        startedAt: 'blah blah'
 
     expect(JSON.parse @response.body).to.deep.equal expectedResponse
 
@@ -179,3 +199,4 @@ describe 'GET /status/foo/bar', ->
     expect(@etcdMajorDockerUrlHandler.isDone).to.be.true
     expect(@etcdMinorDockerUrlHandler.isDone).to.be.true
     expect(@majorHandler.isDone).to.be.true
+    expect(@quayHandler.isDone).to.be.true
