@@ -33,5 +33,6 @@ class Router
   route: (app) =>
     app.post '/deployments', @deploymentsController.create
     app.get '/status/:namespace/:service', @statusController.show
+    # app.patch '/schedule/:docker_url', @scheduleController.update
 
 module.exports = Router

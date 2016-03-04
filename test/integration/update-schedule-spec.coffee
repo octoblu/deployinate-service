@@ -1,0 +1,83 @@
+request = require 'request'
+shmock  = require 'shmock'
+url     = require 'url'
+Server = require '../../src/server'
+
+describe 'POST /schedules', ->
+  beforeEach (done) ->
+    @meshbluServer = shmock()
+    meshbluAddress = @meshbluServer.address()
+
+    @governatorMajor = shmock()
+
+    GOVERNATOR_MAJOR_URL = url.format
+      protocol: 'http'
+      hostname: 'localhost'
+      port: @governatorMajor.address().port
+      auth: 'guv-uuid:guv-token'
+
+    meshbluConfig =
+      protocol: 'http'
+      server: 'localhost'
+      port: meshbluAddress.port
+      uuid: 'deploy-uuid'
+
+    @sut = new Server {
+      ETCD_MAJOR_URI: 'nothing'
+      ETCD_MINOR_URI: 'nothing'
+      GOVERNATOR_MAJOR_URL
+      GOVERNATOR_MINOR_URL: 'nothing'
+      TRAVIS_ORG_URL: 'nothing'
+      TRAVIS_ORG_TOKEN: 'nothing'
+      TRAVIS_PRO_URL: 'nothing'
+      TRAVIS_PRO_TOKEN: 'nothing'
+      meshbluConfig
+    }
+    @sut.run done
+
+  afterEach (done) ->
+    @sut.close done
+
+  afterEach (done) ->
+    @governatorMajor.close done
+
+  afterEach (done) ->
+    @meshbluServer.close done
+
+  beforeEach ->
+    {port} = @sut.address()
+    @baseUrl = url.format protocol: 'http', hostname: 'localhost', port: port
+
+    deployAuth = new Buffer('deploy-uuid:deploy-token').toString 'base64'
+    guvAuth = new Buffer('guv-uuid:guv-token').toString 'base64'
+
+    @meshbluHandler = @meshbluServer
+      .get '/v2/whoami'
+      .set 'Authorization', "Basic #{deployAuth}"
+      .reply 200, uuid: 'governator-uuid'
+
+    @majorHandler = @governatorMajor
+      .patch '/schedule/foo/bar:v1.0.2'
+      .set 'Authorization', "Basic #{guvAuth}"
+      .reply 201, [{branch: 'v1.0.2', result: 0}]
+
+  beforeEach (done) ->
+    options =
+      uri: '/schedules'
+      baseUrl: @baseUrl
+      auth: {username: 'deploy-uuid', password: 'deploy-token'}
+      json:
+        etcd_key: '/octoblu/some-service'
+        docker_url: 'quay.io/octoblu/some-service:v1.0.2'
+        deploy_at: Date.now()
+
+    request.post options, (error, @response, @body) =>
+      return done error if error?
+      done()
+
+  it 'should return a 204', ->
+    expect(@response.statusCode).to.equal 204, JSON.stringify(@body)
+
+  it 'should call the handlers', ->
+    expect(@meshbluHandler.isDone).to.be.true
+    expect(@majorHandler.isDone).to.be.true
