@@ -156,7 +156,7 @@ describe 'GET /status/foo/bar', ->
 
     @quayHandler = @quay
       .get '/api/v1/repository/foo/bar/build/'
-      .set 'Authorization', "token quay-token"
+      .set 'Authorization', 'Bearer quay-token'
       .reply 200, builds: [{tags: ['v1.0.0'], phase: 'building', started: 'blah blah'}]
 
   beforeEach (done) ->

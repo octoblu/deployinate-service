@@ -38,8 +38,8 @@ class StatusModel
       uri: "/api/v1/repository/#{@repository}/build/"
       baseUrl: @QUAY_URL
       json: true
-      headers:
-        Authorization: "token #{@QUAY_TOKEN}"
+      auth:
+        bearer: @QUAY_TOKEN
 
     request.get options, (error, response) =>
       return callback error if error?
