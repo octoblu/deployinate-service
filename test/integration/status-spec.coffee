@@ -84,7 +84,7 @@ describe 'GET /status/foo/bar', ->
     guvAuth = new Buffer('guv-uuid:guv-token').toString 'base64'
 
     @meshbluHandler = @meshbluServer
-      .get '/v2/whoami'
+      .post '/authenticate'
       .set 'Authorization', "Basic #{deployAuth}"
       .reply 200, uuid: 'governator-uuid'
 
