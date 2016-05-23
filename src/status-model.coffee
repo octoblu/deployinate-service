@@ -95,8 +95,10 @@ class StatusModel
         return callback error if error?
 
         _.each _.keys(data), (key) =>
-          node = JSON.parse data[key]
-          servers[node.Id] = node.URL
+          try
+            node = JSON.parse data[key]
+            servers[node.Id] = node.URL
+          catch error
 
         callback null, servers
 
