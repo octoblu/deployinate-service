@@ -1,11 +1,14 @@
-request = require 'request'
-shmock  = require 'shmock'
-url     = require 'url'
+request       = require 'request'
+enableDestroy = require 'server-destroy'
+shmock        = require 'shmock'
+url           = require 'url'
+
 Server = require '../../src/server'
 
 describe 'GET /status/foo/bar', ->
   beforeEach (done) ->
     @meshbluServer = shmock()
+    enableDestroy @meshbluServer
     meshbluAddress = @meshbluServer.address()
 
     @governatorMajor = shmock()
@@ -74,7 +77,7 @@ describe 'GET /status/foo/bar', ->
     @governatorMajor.close done
 
   afterEach (done) ->
-    @meshbluServer.close done
+    @meshbluServer.destroy done
 
   beforeEach ->
     {port} = @sut.address()

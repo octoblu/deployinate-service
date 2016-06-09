@@ -1,11 +1,13 @@
+{afterEach, beforeEach, describe, it} = global
+{expect} = require 'chai'
+
 request       = require 'request'
 enableDestroy = require 'server-destroy'
 shmock        = require 'shmock'
 url           = require 'url'
-
 Server = require '../../src/server'
 
-describe 'POST /deployments', ->
+describe 'POST /cancellations', ->
   beforeEach (done) ->
     @meshbluServer = shmock()
     enableDestroy @meshbluServer
@@ -91,24 +93,19 @@ describe 'POST /deployments', ->
       .set 'Authorization', "Basic #{deployAuth}"
       .reply 200, uuid: 'governator-uuid'
 
-    @travisOrgHandler = @travisOrg
-      .get '/repos/octoblu/some-service/builds'
-      .set 'Authorization', 'token travis-org-token'
-      .reply 200, [{branch: 'v1.0.2', result: 0}]
-
     @majorHandler = @governatorMajor
-      .post '/deployments'
+      .post '/cancellations'
       .set 'Authorization', "Basic #{guvAuth}"
       .reply 201, [{branch: 'v1.0.2', result: 0}]
 
     @minorHandler = @governatorMinor
-      .post '/deployments'
+      .post '/cancellations'
       .set 'Authorization', "Basic #{guvAuth}"
       .reply 201, [{branch: 'v1.0.2', result: 0}]
 
   beforeEach (done) ->
     options =
-      uri: '/deployments'
+      uri: '/cancellations'
       baseUrl: @baseUrl
       auth: {username: 'deploy-uuid', password: 'deploy-token'}
       json:
@@ -125,6 +122,5 @@ describe 'POST /deployments', ->
 
   it 'should call the handlers', ->
     expect(@meshbluHandler.isDone).to.be.true
-    expect(@travisOrgHandler.isDone).to.be.true
     expect(@majorHandler.isDone).to.be.true
     expect(@minorHandler.isDone).to.be.true

@@ -1,6 +1,7 @@
-StatusController = require './status-controller'
-SchedulesController = require './schedules-controller'
-DeploymentsController = require './deployments-controller'
+CancellationsController = require './cancellations-controller'
+DeploymentsController   = require './deployments-controller'
+SchedulesController     = require './schedules-controller'
+StatusController        = require './status-controller'
 
 class Router
   constructor: (options) ->
@@ -20,6 +21,12 @@ class Router
     throw new Error('TRAVIS_PRO_TOKEN is required') unless TRAVIS_PRO_TOKEN?
     throw new Error('QUAY_URL is required') unless QUAY_URL?
     throw new Error('QUAY_TOKEN is required') unless QUAY_TOKEN?
+
+    @cancellationsController = new CancellationsController {
+      GOVERNATOR_MAJOR_URL
+      GOVERNATOR_MINOR_URL
+      ETCDCTL_PEERS: ETCD_MAJOR_URI
+    }
 
     @deploymentsController = new DeploymentsController {
       GOVERNATOR_MAJOR_URL
@@ -46,6 +53,7 @@ class Router
 
   route: (app) =>
     app.post '/deployments', @deploymentsController.create
+    app.post '/cancellations', @cancellationsController.create
     app.get '/status/:namespace/:service', @statusController.show
     app.post '/schedules', @schedulesController.create
 
