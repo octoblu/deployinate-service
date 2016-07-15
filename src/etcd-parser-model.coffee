@@ -1,6 +1,4 @@
 _       = require 'lodash'
-fs     = require 'fs'
-debug   = require('debug')('deployinate-service:etcd-parser-model')
 
 class EtcdParserModel
   constructor: (@key, @data, dependencies={}) ->

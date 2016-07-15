@@ -30,6 +30,16 @@ class StatusModel
       quay: @_getQuayStatus
     }, callback
 
+  getV2: (callback) =>
+    async.parallel {
+      majorVersion: @_getMajorVersion
+      minorVersion: @_getMinorVersion
+      status: @_getStatus
+      deployments: @_getGovernatorMajor
+      servers: @_getVulcandBackendWithVersions
+      quay: @_getQuayStatus
+    }, callback
+
   _getStatus: (callback) =>
     @_getEtcd @ETCD_MAJOR_URI, "/#{@repository}/status", callback
 
@@ -79,6 +89,18 @@ class StatusModel
       etcdParser = new EtcdParserModel key, keys
       etcdParser.parse callback
 
+  _getServerVersion: (server, callback) =>
+    options = {
+      baseUrl: server.url
+      uri: '/version'
+      json: true
+    }
+    request.get options, (error, response, body) =>
+      return callback null, _.assign(version: error.message, server) if error?
+      if response.statusCode != 200
+        return callback null, _.assign(version: "(HTTP: #{response.statusCode})", server)
+      return callback null, _.assign(version: "v#{body.version}", server)
+
   _getVulcandBackend: (callback) =>
     debug 'getVulcandBackend', @repository
     service = @repository.replace('/', '-')
@@ -101,6 +123,12 @@ class StatusModel
           catch error
 
         callback null, servers
+
+  _getVulcandBackendWithVersions: (callback) =>
+    @_getVulcandBackend (error, serverMap) =>
+      return callback error if error?
+      servers = _.map serverMap, (url, name) => {url, name}
+      async.map servers, @_getServerVersion, callback
 
   _getGovernatorMajor: (callback) =>
     options =

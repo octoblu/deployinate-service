@@ -22,7 +22,7 @@ class StatusController
       @QUAY_URL
       @QUAY_TOKEN
     }
-    status.get (error, statusInfo) =>
+    status.getV2 (error, statusInfo) =>
       return res.status(error.code ? 500).send(error: error.message) if error?
       return res.status(200).send statusInfo
 

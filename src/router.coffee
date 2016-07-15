@@ -3,6 +3,8 @@ DeploymentsController   = require './deployments-controller'
 SchedulesController     = require './schedules-controller'
 StatusController        = require './status-controller'
 
+V2StatusController      = require './v2-status-controller'
+
 class Router
   constructor: (options) ->
     {GOVERNATOR_MAJOR_URL, GOVERNATOR_MINOR_URL} = options
@@ -47,6 +49,15 @@ class Router
       QUAY_TOKEN
     }
 
+    @v2StatusController = new V2StatusController {
+      GOVERNATOR_MAJOR_URL
+      GOVERNATOR_MINOR_URL
+      ETCD_MAJOR_URI
+      ETCD_MINOR_URI
+      QUAY_URL
+      QUAY_TOKEN
+    }
+
     @schedulesController = new SchedulesController {
       GOVERNATOR_MAJOR_URL
     }
@@ -56,5 +67,6 @@ class Router
     app.post '/cancellations', @cancellationsController.create
     app.get '/status/:namespace/:service', @statusController.show
     app.post '/schedules', @schedulesController.create
+    app.get '/v2/status/:namespace/:service', @v2StatusController.show
 
 module.exports = Router

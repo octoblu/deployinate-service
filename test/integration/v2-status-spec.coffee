@@ -8,7 +8,7 @@ url           = require 'url'
 
 Server = require '../../src/server'
 
-describe 'GET /status/foo/bar', ->
+describe 'GET /v2/status/foo/bar', ->
   beforeEach (done) ->
     @meshbluServer = shmock()
     enableDestroy @meshbluServer
@@ -16,6 +16,9 @@ describe 'GET /status/foo/bar', ->
 
     @governatorMajor = shmock()
     @governatorMinor = shmock()
+
+    @server1 = shmock()
+    @server2 = shmock()
 
     GOVERNATOR_MAJOR_URL = url.format
       protocol: 'http'
@@ -72,6 +75,12 @@ describe 'GET /status/foo/bar', ->
 
   afterEach (done) ->
     @etcdMinor.close done
+
+  afterEach (done) ->
+    @server2.close done
+
+  afterEach (done) ->
+    @server1.close done
 
   afterEach (done) ->
     @governatorMinor.close done
@@ -139,10 +148,25 @@ describe 'GET /status/foo/bar', ->
       node:
         key: '/vulcand/backends/foo-bar/servers'
         dir: true
-        nodes: [
-          key: '/vulcand/backends/foo-bar/servers'
-          value: '{"Id":"octoblu-foo-bar-development-1","URL":"http://172.17.8.101:32771"}'
-        ]
+        nodes: [{
+          key: '/vulcand/backends/foo-bar/servers/octoblu-foo-bar-development-1'
+          value: JSON.stringify {
+            Id:  "octoblu-foo-bar-development-1"
+            URL: "http://127.0.0.1:#{@server1.address().port}"
+          }
+        }, {
+          key: '/vulcand/backends/foo-bar/servers/octoblu-foo-bar-development-2'
+          value: JSON.stringify {
+            Id:  "octoblu-foo-bar-development-2"
+            URL: "http://127.0.0.1:#{@server2.address().port}"
+          }
+        }, {
+          key: '/vulcand/backends/foo-bar/servers/octoblu-foo-bar-development-3'
+          value: JSON.stringify {
+            Id:  "octoblu-foo-bar-development-3"
+            URL: "http://0.0.0.0:0"
+          }
+        }]
 
     @etcdMajorStatusHandler = @etcdMajor
       .get '/v2/keys/foo/bar/status'
@@ -165,9 +189,17 @@ describe 'GET /status/foo/bar', ->
       .set 'Authorization', 'Bearer quay-token'
       .reply 200, builds: [{tags: ['v1.0.0'], phase: 'building', started: 'blah blah'}]
 
+    @server1Handler = @server1
+      .get '/version'
+      .reply 200, version: '2.2.0'
+
+    @server2Handler = @server2
+      .get '/version'
+      .reply 404, 'Not Found'
+
   beforeEach (done) ->
     options =
-      uri: '/status/foo/bar'
+      uri: '/v2/status/foo/bar'
       baseUrl: @baseUrl
       auth: {username: 'deploy-uuid', password: 'deploy-token'}
 
@@ -189,14 +221,24 @@ describe 'GET /status/foo/bar', ->
           deployAt: 2005059595
           key: "governator:/foo/bar:quay.io/foo/bar:v1.0.0"
           status: "pending"
-      servers:
-        'octoblu-foo-bar-development-1': 'http://172.17.8.101:32771'
+      servers: [{
+          name: 'octoblu-foo-bar-development-1'
+          url: "http://127.0.0.1:#{@server1.address().port}"
+          version: 'v2.2.0'
+        }, {
+          name: 'octoblu-foo-bar-development-2'
+          url: "http://127.0.0.1:#{@server2.address().port}"
+          version: "(HTTP: 404)"
+        }, {
+          name: 'octoblu-foo-bar-development-3'
+          url: "http://0.0.0.0:0"
+      }]
       quay:
         tag: 'v1.0.0'
         phase: 'building'
         startedAt: 'blah blah'
 
-    expect(JSON.parse @response.body).to.deep.equal expectedResponse
+    expect(JSON.parse @response.body).to.containSubset expectedResponse
 
   it 'should call the handlers', ->
     expect(@meshbluHandler.isDone).to.be.true
@@ -206,3 +248,5 @@ describe 'GET /status/foo/bar', ->
     expect(@etcdMinorDockerUrlHandler.isDone).to.be.true
     expect(@majorHandler.isDone).to.be.true
     expect(@quayHandler.isDone).to.be.true
+    expect(@server1Handler.isDone).to.be.true
+    expect(@server2Handler.isDone).to.be.true
