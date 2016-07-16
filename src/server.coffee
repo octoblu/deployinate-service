@@ -5,7 +5,7 @@ bodyParser         = require 'body-parser'
 errorHandler       = require 'errorhandler'
 meshbluHealthcheck = require 'express-meshblu-healthcheck'
 meshbluAuthDevice  = require 'express-meshblu-auth-device'
-debug              = require('debug')('deployinate-service:server')
+packageVersion     = require 'express-package-version'
 Router             = require './router'
 
 class Server
@@ -34,6 +34,7 @@ class Server
   run: (callback) =>
     app = express()
     app.use meshbluHealthcheck()
+    app.use packageVersion()
     app.use morgan('dev', immediate: false)
     app.use cors()
     app.use errorHandler()
