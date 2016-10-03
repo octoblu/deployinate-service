@@ -7,7 +7,7 @@ V2StatusController      = require './v2-status-controller'
 
 class Router
   constructor: (options) ->
-    {GOVERNATOR_MAJOR_URL, GOVERNATOR_MINOR_URL} = options
+    {GOVERNATOR_MAJOR_URL, GOVERNATOR_MINOR_URL, GOVERNATOR_SWARM_URL} = options
     {ETCD_MAJOR_URI, ETCD_MINOR_URI} = options
     {TRAVIS_ORG_URL, TRAVIS_ORG_TOKEN} = options
     {TRAVIS_PRO_URL, TRAVIS_PRO_TOKEN} = options
@@ -17,6 +17,7 @@ class Router
     throw new Error('ETCD_MINOR_URI is required') unless ETCD_MINOR_URI?
     throw new Error('GOVERNATOR_MAJOR_URL is required') unless GOVERNATOR_MAJOR_URL?
     throw new Error('GOVERNATOR_MINOR_URL is required') unless GOVERNATOR_MINOR_URL?
+    throw new Error('GOVERNATOR_SWARM_URL is required') unless GOVERNATOR_SWARM_URL?
     throw new Error('TRAVIS_ORG_URL is required') unless TRAVIS_ORG_URL?
     throw new Error('TRAVIS_ORG_TOKEN is required') unless TRAVIS_ORG_TOKEN?
     throw new Error('TRAVIS_PRO_URL is required') unless TRAVIS_PRO_URL?
@@ -27,12 +28,14 @@ class Router
     @cancellationsController = new CancellationsController {
       GOVERNATOR_MAJOR_URL
       GOVERNATOR_MINOR_URL
+      GOVERNATOR_SWARM_URL
       ETCDCTL_PEERS: ETCD_MAJOR_URI
     }
 
     @deploymentsController = new DeploymentsController {
       GOVERNATOR_MAJOR_URL
       GOVERNATOR_MINOR_URL
+      GOVERNATOR_SWARM_URL
       TRAVIS_ORG_URL
       TRAVIS_ORG_TOKEN
       TRAVIS_PRO_URL

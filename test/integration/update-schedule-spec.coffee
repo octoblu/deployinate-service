@@ -30,6 +30,7 @@ describe 'POST /schedules', ->
       ETCD_MINOR_URI: 'nothing'
       GOVERNATOR_MAJOR_URL
       GOVERNATOR_MINOR_URL: 'nothing'
+      GOVERNATOR_SWARM_URL: 'nothing'
       TRAVIS_ORG_URL: 'nothing'
       TRAVIS_ORG_TOKEN: 'nothing'
       TRAVIS_PRO_URL: 'nothing'

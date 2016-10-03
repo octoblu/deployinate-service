@@ -3,7 +3,7 @@ _            = require 'lodash'
 class CancellationsController
   constructor: (options, dependencies={}) ->
     {@ETCDCTL_PEERS} = options
-    {@GOVERNATOR_MAJOR_URL, @GOVERNATOR_MINOR_URL} = options
+    {@GOVERNATOR_MAJOR_URL, @GOVERNATOR_MINOR_URL, @GOVERNATOR_SWARM_URL} = options
 
     @CancellationModel = dependencies.CancellationModel || require './cancellation-model'
 
@@ -17,6 +17,7 @@ class CancellationsController
       @ETCDCTL_PEERS
       @GOVERNATOR_MAJOR_URL
       @GOVERNATOR_MINOR_URL
+      @GOVERNATOR_SWARM_URL
     }
     @cancellation.create (error) ->
       return res.status(error.code ? 500).send(error.message) if error?

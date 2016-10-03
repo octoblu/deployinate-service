@@ -4,7 +4,7 @@ debug        = require('debug')('deployinate-service:deployment-controller')
 class DeploymentsController
   constructor: (options, dependencies={}) ->
     {@ETCDCTL_PEERS} = options
-    {@GOVERNATOR_MAJOR_URL, @GOVERNATOR_MINOR_URL} = options
+    {@GOVERNATOR_MAJOR_URL, @GOVERNATOR_MINOR_URL, @GOVERNATOR_SWARM_URL} = options
     {@TRAVIS_ORG_URL, @TRAVIS_ORG_TOKEN, @TRAVIS_PRO_URL, @TRAVIS_PRO_TOKEN} = options
 
     @DeploymentModel = dependencies.DeploymentModel || require './deployment-model'
@@ -19,6 +19,7 @@ class DeploymentsController
       @ETCDCTL_PEERS
       @GOVERNATOR_MAJOR_URL
       @GOVERNATOR_MINOR_URL
+      @GOVERNATOR_SWARM_URL
       @TRAVIS_PRO_URL
       @TRAVIS_ORG_URL
       @TRAVIS_PRO_TOKEN

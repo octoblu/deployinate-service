@@ -6,13 +6,14 @@ class CancellationModel
   constructor: (options) ->
     {@repository, @docker_url, @tag} = options
     {@ETCDCTL_PEERS} = options
-    {@GOVERNATOR_MAJOR_URL, @GOVERNATOR_MINOR_URL} = options
+    {@GOVERNATOR_MAJOR_URL, @GOVERNATOR_MINOR_URL, @GOVERNATOR_SWARM_URL} = options
     throw new Error('repository is required') unless @repository?
     throw new Error('docker_url is required') unless @docker_url?
     throw new Error('tag is required') unless @tag?
     throw new Error('ETCDCTL_PEERS is required') unless @ETCDCTL_PEERS?
     throw new Error('GOVERNATOR_MAJOR_URL is required') unless @GOVERNATOR_MAJOR_URL?
     throw new Error('GOVERNATOR_MINOR_URL is required') unless @GOVERNATOR_MINOR_URL?
+    throw new Error('GOVERNATOR_SWARM_URL is required') unless @GOVERNATOR_SWARM_URL?
     @repositoryDasherized = @repository?.replace '/', '-'
 
   _unprocessableError: (message) =>
@@ -33,6 +34,7 @@ class CancellationModel
     async.series [
       @_postGovernatorMajor
       @_postGovernatorMinor
+      @_postGovernatorSwarm
     ], callback
 
   _postGovernatorMinor: (callback) =>
@@ -40,6 +42,9 @@ class CancellationModel
 
   _postGovernatorMajor: (callback) =>
     @_postGovernator uri: @GOVERNATOR_MAJOR_URL, callback
+
+  _postGovernatorSwarm: (callback) =>
+    @_postGovernator uri: @GOVERNATOR_SWARM_URL, callback
 
   _postGovernator: ({uri}, callback) =>
     options =

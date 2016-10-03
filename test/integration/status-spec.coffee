@@ -16,6 +16,7 @@ describe 'GET /status/foo/bar', ->
 
     @governatorMajor = shmock()
     @governatorMinor = shmock()
+    @governatorSwarm = shmock()
 
     GOVERNATOR_MAJOR_URL = url.format
       protocol: 'http'
@@ -27,6 +28,12 @@ describe 'GET /status/foo/bar', ->
       protocol: 'http'
       hostname: 'localhost'
       port: @governatorMinor.address().port
+      auth: 'guv-uuid:guv-token'
+
+    GOVERNATOR_SWARM_URL = url.format
+      protocol: 'http'
+      hostname: 'localhost'
+      port: @governatorSwarm.address().port
       auth: 'guv-uuid:guv-token'
 
     @etcdMajor = shmock()
@@ -51,6 +58,7 @@ describe 'GET /status/foo/bar', ->
       ETCD_MINOR_URI
       GOVERNATOR_MAJOR_URL
       GOVERNATOR_MINOR_URL
+      GOVERNATOR_SWARM_URL
       TRAVIS_ORG_URL: 'nothing'
       TRAVIS_ORG_TOKEN: 'nothing'
       TRAVIS_PRO_URL: 'nothing'
@@ -72,6 +80,9 @@ describe 'GET /status/foo/bar', ->
 
   afterEach (done) ->
     @etcdMinor.close done
+
+  afterEach (done) ->
+    @governatorSwarm.close done
 
   afterEach (done) ->
     @governatorMinor.close done

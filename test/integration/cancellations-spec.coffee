@@ -15,6 +15,7 @@ describe 'POST /cancellations', ->
 
     @governatorMajor = shmock()
     @governatorMinor = shmock()
+    @governatorSwarm = shmock()
 
     GOVERNATOR_MAJOR_URL = url.format
       protocol: 'http'
@@ -26,6 +27,12 @@ describe 'POST /cancellations', ->
       protocol: 'http'
       hostname: 'localhost'
       port: @governatorMinor.address().port
+      auth: 'guv-uuid:guv-token'
+
+    GOVERNATOR_SWARM_URL = url.format
+      protocol: 'http'
+      hostname: 'localhost'
+      port: @governatorSwarm.address().port
       auth: 'guv-uuid:guv-token'
 
     @etcd = shmock()
@@ -50,6 +57,7 @@ describe 'POST /cancellations', ->
       ETCD_MINOR_URI: 'nothing'
       GOVERNATOR_MAJOR_URL
       GOVERNATOR_MINOR_URL
+      GOVERNATOR_SWARM_URL
       TRAVIS_ORG_URL
       TRAVIS_ORG_TOKEN
       TRAVIS_PRO_URL
@@ -71,6 +79,9 @@ describe 'POST /cancellations', ->
 
   afterEach (done) ->
     @etcd.close done
+
+  afterEach (done) ->
+    @governatorSwarm.close done
 
   afterEach (done) ->
     @governatorMinor.close done
@@ -103,6 +114,11 @@ describe 'POST /cancellations', ->
       .set 'Authorization', "Basic #{guvAuth}"
       .reply 201, [{branch: 'v1.0.2', result: 0}]
 
+    @swarmHandler = @governatorSwarm
+      .post '/cancellations'
+      .set 'Authorization', "Basic #{guvAuth}"
+      .reply 201, [{branch: 'v1.0.2', result: 0}]
+
   beforeEach (done) ->
     options =
       uri: '/cancellations'
@@ -124,3 +140,4 @@ describe 'POST /cancellations', ->
     expect(@meshbluHandler.isDone).to.be.true
     expect(@majorHandler.isDone).to.be.true
     expect(@minorHandler.isDone).to.be.true
+    expect(@swarmHandler.isDone).to.be.true
