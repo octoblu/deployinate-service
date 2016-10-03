@@ -65,4 +65,7 @@ class Server
   close: (callback) =>
     @server.close callback
 
+  stop: (callback) =>
+    @server.close callback
+
 module.exports = Server
