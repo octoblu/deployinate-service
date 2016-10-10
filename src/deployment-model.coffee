@@ -11,7 +11,7 @@ class DeploymentModel
   constructor: (options) ->
     {@repository, @docker_url, @tag} = options
     {@ETCDCTL_PEERS} = options
-    {@GOVERNATOR_MAJOR_URL, @GOVERNATOR_MINOR_URL, @GOVERNATOR_SWARM_URL} = options
+    {@GOVERNATOR_MAJOR_URL, @GOVERNATOR_MINOR_URL} = options
     {@TRAVIS_PRO_URL,@TRAVIS_ORG_URL} = options
     {@TRAVIS_PRO_TOKEN,@TRAVIS_ORG_TOKEN} = options
     throw new Error('repository is required') unless @repository?
@@ -19,7 +19,6 @@ class DeploymentModel
     throw new Error('tag is required') unless @tag?
     throw new Error('ETCDCTL_PEERS is required') unless @ETCDCTL_PEERS?
     throw new Error('GOVERNATOR_MAJOR_URL is required') unless @GOVERNATOR_MAJOR_URL?
-    throw new Error('GOVERNATOR_SWARM_URL is required') unless @GOVERNATOR_SWARM_URL?
     throw new Error('GOVERNATOR_MINOR_URL is required') unless @GOVERNATOR_MINOR_URL?
     throw new Error('TRAVIS_PRO_URL is required') unless @TRAVIS_PRO_URL?
     throw new Error('TRAVIS_PRO_TOKEN is required') unless @TRAVIS_PRO_TOKEN?
@@ -53,7 +52,6 @@ class DeploymentModel
         async.apply @_setKey, "#{@repository}/status/travis", "build successful: #{@tag}"
         @_postGovernatorMajor
         @_postGovernatorMinor
-        @_postGovernatorSwarm
       ], callback
 
   _getTravisBuildStatus: (callback=->) =>
@@ -80,9 +78,6 @@ class DeploymentModel
 
   _postGovernatorMajor: (callback) =>
     @_postGovernator uri: @GOVERNATOR_MAJOR_URL, callback
-
-  _postGovernatorSwarm: (callback) =>
-    @_postGovernator uri: @GOVERNATOR_SWARM_URL, callback
 
   _postGovernator: ({uri}, callback) =>
     options =

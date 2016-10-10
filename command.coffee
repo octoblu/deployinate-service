@@ -18,7 +18,6 @@ class Command
     TRAVIS_ORG_TOKEN = process.env.TRAVIS_ORG_TOKEN
     GOVERNATOR_MAJOR_URL = process.env.GOVERNATOR_MAJOR_URL
     GOVERNATOR_MINOR_URL = process.env.GOVERNATOR_MINOR_URL
-    GOVERNATOR_SWARM_URL = process.env.GOVERNATOR_SWARM_URL
     QUAY_URL = process.env.QUAY_URL
     QUAY_TOKEN = process.env.QUAY_TOKEN
     meshbluConfig = new MeshbluConfig().toJSON()
@@ -27,7 +26,6 @@ class Command
     @panic new Error('env variable ETCD_MINOR_URI is required') unless ETCD_MINOR_URI?
     @panic new Error('env variable GOVERNATOR_MAJOR_URL is required') unless GOVERNATOR_MAJOR_URL?
     @panic new Error('env variable GOVERNATOR_MINOR_URL is required') unless GOVERNATOR_MINOR_URL?
-    @panic new Error('env variable GOVERNATOR_SWARM_URL is required') unless GOVERNATOR_SWARM_URL?
     @panic new Error('env variable QUAY_URL is required') unless QUAY_URL?
     @panic new Error('env variable QUAY_TOKEN is required') unless QUAY_TOKEN?
     @panic new Error('env variable TRAVIS_PRO_URL is required') unless TRAVIS_PRO_URL?
@@ -42,7 +40,6 @@ class Command
       ETCD_MINOR_URI
       GOVERNATOR_MAJOR_URL
       GOVERNATOR_MINOR_URL
-      GOVERNATOR_SWARM_URL
       TRAVIS_ORG_URL
       TRAVIS_ORG_TOKEN
       TRAVIS_PRO_URL

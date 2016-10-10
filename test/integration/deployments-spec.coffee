@@ -13,7 +13,6 @@ describe 'POST /deployments', ->
 
     @governatorMajor = shmock()
     @governatorMinor = shmock()
-    @governatorSwarm = shmock()
 
     GOVERNATOR_MAJOR_URL = url.format
       protocol: 'http'
@@ -25,12 +24,6 @@ describe 'POST /deployments', ->
       protocol: 'http'
       hostname: 'localhost'
       port: @governatorMinor.address().port
-      auth: 'guv-uuid:guv-token'
-
-    GOVERNATOR_SWARM_URL = url.format
-      protocol: 'http'
-      hostname: 'localhost'
-      port: @governatorSwarm.address().port
       auth: 'guv-uuid:guv-token'
 
     @etcd = shmock()
@@ -55,7 +48,6 @@ describe 'POST /deployments', ->
       ETCD_MINOR_URI: 'nothing'
       GOVERNATOR_MAJOR_URL
       GOVERNATOR_MINOR_URL
-      GOVERNATOR_SWARM_URL
       TRAVIS_ORG_URL
       TRAVIS_ORG_TOKEN
       TRAVIS_PRO_URL
@@ -77,9 +69,6 @@ describe 'POST /deployments', ->
 
   afterEach (done) ->
     @etcd.close done
-
-  afterEach (done) ->
-    @governatorSwarm.close done
 
   afterEach (done) ->
     @governatorMinor.close done
@@ -117,11 +106,6 @@ describe 'POST /deployments', ->
       .set 'Authorization', "Basic #{guvAuth}"
       .reply 201, [{branch: 'v1.0.2', result: 0}]
 
-    @swarmHandler = @governatorSwarm
-      .post '/deployments'
-      .set 'Authorization', "Basic #{guvAuth}"
-      .reply 201, [{branch: 'v1.0.2', result: 0}]
-
   beforeEach (done) ->
     options =
       uri: '/deployments'
@@ -144,4 +128,3 @@ describe 'POST /deployments', ->
     expect(@travisOrgHandler.isDone).to.be.true
     expect(@majorHandler.isDone).to.be.true
     expect(@minorHandler.isDone).to.be.true
-    expect(@swarmHandler.isDone).to.be.true

@@ -54,7 +54,6 @@ describe 'GET /v2/status/foo/bar', ->
       ETCD_MINOR_URI
       GOVERNATOR_MAJOR_URL
       GOVERNATOR_MINOR_URL
-      GOVERNATOR_SWARM_URL: 'nothing'
       TRAVIS_ORG_URL: 'nothing'
       TRAVIS_ORG_TOKEN: 'nothing'
       TRAVIS_PRO_URL: 'nothing'

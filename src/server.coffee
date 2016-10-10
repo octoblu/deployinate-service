@@ -11,7 +11,7 @@ Router             = require './router'
 class Server
   constructor: (options)->
     {@port, @meshbluConfig} = options
-    {@GOVERNATOR_MAJOR_URL, @GOVERNATOR_MINOR_URL, @GOVERNATOR_SWARM_URL} = options
+    {@GOVERNATOR_MAJOR_URL, @GOVERNATOR_MINOR_URL} = options
     {@ETCD_MAJOR_URI, @ETCD_MINOR_URI} = options
     {@TRAVIS_ORG_TOKEN, @TRAVIS_ORG_URL} = options
     {@TRAVIS_PRO_URL, @TRAVIS_PRO_TOKEN} = options
@@ -20,7 +20,6 @@ class Server
     throw new Error('ETCD_MINOR_URI is required') unless @ETCD_MINOR_URI?
     throw new Error('GOVERNATOR_MAJOR_URL is required') unless @GOVERNATOR_MAJOR_URL?
     throw new Error('GOVERNATOR_MINOR_URL is required') unless @GOVERNATOR_MINOR_URL?
-    throw new Error('GOVERNATOR_SWARM_URL is required') unless @GOVERNATOR_SWARM_URL?
     throw new Error('TRAVIS_PRO_URL is required') unless @TRAVIS_PRO_URL?
     throw new Error('TRAVIS_ORG_URL is required') unless @TRAVIS_ORG_URL?
     throw new Error('TRAVIS_PRO_TOKEN is required') unless @TRAVIS_PRO_TOKEN?
@@ -50,7 +49,6 @@ class Server
       @ETCD_MINOR_URI
       @GOVERNATOR_MAJOR_URL
       @GOVERNATOR_MINOR_URL
-      @GOVERNATOR_SWARM_URL
       @TRAVIS_PRO_URL
       @TRAVIS_ORG_URL
       @TRAVIS_PRO_TOKEN
